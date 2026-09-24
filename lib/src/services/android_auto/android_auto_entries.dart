@@ -6,8 +6,11 @@ import 'package:smartify_os_android_auto/src/providers/android_auto_provider.dar
 import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_service.dart';
 import 'package:smartify_os_android_auto/src/utils/android_auto_status_text.dart';
 import 'package:smartify_os_android_auto/src/widgets/android_auto_icon.dart';
+import 'package:smartify_os_android_auto/src/widgets/home_widgets/android_auto_navigation_home_widget.dart';
+import 'package:smartify_os_android_auto/src/widgets/home_widgets/android_auto_player_home_widget.dart';
 import 'package:smartify_os_core/app_list.dart';
 import 'package:smartify_os_core/bluetooth.dart';
+import 'package:smartify_os_core/home_widgets.dart';
 import 'package:smartify_os_core/settings.dart';
 
 /// The names of what the Android Auto extension adds, to hide or find any of
@@ -34,7 +37,55 @@ class AndroidAutoIds {
   /// The ongoing notification shown while Android Auto runs, which also puts
   /// its icon in the status bar.
   static const String notification = AndroidAutoService.notificationId;
+
+  /// The home screen card with what the phone is playing. It stands in for
+  /// `HomeWidgets.bluetoothPlayer` while it is there.
+  static const String playerWidget = 'android_auto.player';
+
+  /// The home screen card with the next turn, while the phone is guiding.
+  static const String navigationWidget = 'android_auto.navigation';
 }
+
+/// Internal: the two cards on the home screen. Each checks the driver's own
+/// switch for it in Settings, so hiding one there never touches what the app
+/// or the driver chose about the card itself.
+List<HomeWidget> androidAutoHomeWidgets() => [
+  HomeWidget(
+    id: AndroidAutoIds.navigationWidget,
+    // Before the music: the next turn is the more urgent of the two.
+    order: 10,
+    visible: (home) {
+      final service = AndroidAutoService.instance;
+      final state =
+          home.ref.watch(androidAutoStateProvider).value ?? service.state;
+      final navigation =
+          home.ref.watch(androidAutoNavigationProvider).value ??
+          service.navigation;
+      return state.showNavigation && navigation != null;
+    },
+    onTap: AndroidAutoService.instance.openWindow,
+    builder: (home) => const AndroidAutoNavigationHomeWidget(),
+  ),
+  HomeWidget(
+    id: AndroidAutoIds.playerWidget,
+    // Where the Bluetooth player sits, since this takes its place.
+    order: 20,
+    // The phone reports the same song over Bluetooth too, and one card per
+    // song is enough.
+    replaces: const {HomeWidgets.bluetoothPlayer},
+    visible: (home) {
+      final service = AndroidAutoService.instance;
+      final state =
+          home.ref.watch(androidAutoStateProvider).value ?? service.state;
+      final playing =
+          home.ref.watch(androidAutoNowPlayingProvider).value ??
+          service.nowPlaying;
+      return state.showPlayer && playing != null;
+    },
+    onTap: AndroidAutoService.instance.openWindow,
+    builder: (home) => const AndroidAutoPlayerHomeWidget(),
+  ),
+];
 
 /// Internal: the entry in the app list that opens the Android Auto window.
 AppListEntry androidAutoAppListEntry() => AppListEntry(
@@ -109,6 +160,20 @@ SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
           title: t.settings.hotspot_name,
           value: state.hotspotName!,
         ),
+      SettingsEntry.toggle(
+        title: t.settings.show_navigation,
+        subtitle: t.settings.show_navigation_hint,
+        initialValue: state.showNavigation,
+        section: t.settings.home_screen,
+        onChanged: (on) => unawaited(service.setShowNavigation(on)),
+      ),
+      SettingsEntry.toggle(
+        title: t.settings.show_player,
+        subtitle: t.settings.show_player_hint,
+        initialValue: state.showPlayer,
+        section: t.settings.home_screen,
+        onChanged: (on) => unawaited(service.setShowPlayer(on)),
+      ),
       if (state.wirelessAvailable) ...[
         SettingsEntry.info(
           title: t.settings.wireless_phones,

@@ -42,6 +42,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 
 	// Translations
 	late final Translations$android_auto$en android_auto = Translations$android_auto$en.internal(_root);
+	late final Translations$navigation$en navigation = Translations$navigation$en.internal(_root);
 	late final Translations$settings$en settings = Translations$settings$en.internal(_root);
 }
 
@@ -120,6 +121,30 @@ class Translations$android_auto$en {
 	String get autostart_question_no => 'Not now';
 }
 
+// Path: navigation
+class Translations$navigation$en {
+	Translations$navigation$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Finding a new route'
+	String get rerouting => 'Finding a new route';
+
+	/// en: 'Exit $number'
+	String exit({required Object number}) => 'Exit ${number}';
+
+	/// en: 'Arrive $time'
+	String arrive({required Object time}) => 'Arrive ${time}';
+
+	/// en: '$minutes min'
+	String minutes({required Object minutes}) => '${minutes} min';
+
+	/// en: '$hours h $minutes min'
+	String hours({required Object hours, required Object minutes}) => '${hours} h ${minutes} min';
+}
+
 // Path: settings
 class Translations$settings$en {
 	Translations$settings$en.internal(this._root);
@@ -178,6 +203,21 @@ class Translations$settings$en {
 
 	/// en: 'Forget that phone in Bluetooth settings and pair it again once. Until then it never offers to connect without a cable'
 	String get pair_again_hint => 'Forget that phone in Bluetooth settings and pair it again once. Until then it never offers to connect without a cable';
+
+	/// en: 'Home screen'
+	String get home_screen => 'Home screen';
+
+	/// en: 'Show what is playing'
+	String get show_player => 'Show what is playing';
+
+	/// en: 'Instead of the Bluetooth player, while a phone is connected'
+	String get show_player_hint => 'Instead of the Bluetooth player, while a phone is connected';
+
+	/// en: 'Show directions'
+	String get show_navigation => 'Show directions';
+
+	/// en: 'The next turn, while the phone is guiding you somewhere'
+	String get show_navigation_hint => 'The next turn, while the phone is guiding you somewhere';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -210,6 +250,11 @@ extension on Translations {
 			'android_auto.autostart_question_message' => 'Next time your phone is plugged in, or connects over Bluetooth after using Android Auto without a cable here, Android Auto can start by itself. You can change this in Settings.',
 			'android_auto.autostart_question_yes' => 'Start on its own',
 			'android_auto.autostart_question_no' => 'Not now',
+			'navigation.rerouting' => 'Finding a new route',
+			'navigation.exit' => ({required Object number}) => 'Exit ${number}',
+			'navigation.arrive' => ({required Object time}) => 'Arrive ${time}',
+			'navigation.minutes' => ({required Object minutes}) => '${minutes} min',
+			'navigation.hours' => ({required Object hours, required Object minutes}) => '${hours} h ${minutes} min',
 			'settings.status' => 'Status',
 			'settings.last_problem' => 'Last problem',
 			'settings.start' => 'Start Android Auto',
@@ -227,6 +272,11 @@ extension on Translations {
 			'settings.forget_phones_hint' => 'They start Android Auto over Bluetooth again after connecting without a cable once more',
 			'settings.pair_again_title' => 'Paired before Android Auto was installed?',
 			'settings.pair_again_hint' => 'Forget that phone in Bluetooth settings and pair it again once. Until then it never offers to connect without a cable',
+			'settings.home_screen' => 'Home screen',
+			'settings.show_player' => 'Show what is playing',
+			'settings.show_player_hint' => 'Instead of the Bluetooth player, while a phone is connected',
+			'settings.show_navigation' => 'Show directions',
+			'settings.show_navigation_hint' => 'The next turn, while the phone is guiding you somewhere',
 			_ => null,
 		};
 	}

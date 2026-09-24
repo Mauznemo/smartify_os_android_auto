@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:android_auto/android_auto.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:smartify_os_android_auto/src/android_auto_extension.dart';
 import 'package:smartify_os_android_auto/src/i18n/strings.g.dart';
@@ -16,6 +18,7 @@ import 'package:smartify_os_android_auto/src/windows/android_auto_window.dart';
 import 'package:smartify_os_core/bluetooth.dart';
 import 'package:smartify_os_core/core.dart';
 import 'package:smartify_os_core/date_time.dart';
+import 'package:smartify_os_core/media.dart';
 import 'package:smartify_os_core/modals.dart';
 import 'package:smartify_os_core/notifications.dart';
 import 'package:smartify_os_core/settings.dart';
@@ -119,6 +122,14 @@ class AndroidAutoService {
 
   String? _notificationBody;
 
+  // What the phone is doing, for the home screen. See [_onMedia].
+  final _nowPlaying = ValueStream<MediaPlayerInfo?>(null);
+  final _navigation = ValueStream<AndroidAutoNavigation?>(null);
+  AndroidAutoMediaInfo? _media;
+  DateTime? _mediaPositionAt;
+  Uint8List? _artworkBytes;
+  ImageProvider? _artwork;
+
   /// Everything worth showing about Android Auto right now.
   AndroidAutoState get state => _state.value;
 
@@ -127,6 +138,18 @@ class AndroidAutoService {
 
   /// The head unit, or `null` where there is none.
   AndroidAutoController? get controller => _controller;
+
+  /// What the phone is playing, while one is connected and playing anything.
+  MediaPlayerInfo? get nowPlaying => _nowPlaying.value;
+
+  /// Emits every time [nowPlaying] changes, starting with what it is now.
+  Stream<MediaPlayerInfo?> get nowPlayingChanges => _nowPlaying.stream;
+
+  /// The guidance in progress, while a connected phone is guiding.
+  AndroidAutoNavigation? get navigation => _navigation.value;
+
+  /// Emits every time [navigation] changes, starting with what it is now.
+  Stream<AndroidAutoNavigation?> get navigationChanges => _navigation.stream;
 
   /// Whether Android Auto works on this machine at all.
   bool get isSupported => _controller != null;
@@ -190,6 +213,8 @@ class AndroidAutoService {
         _ => null,
       },
       wirelessPhones: saved.wirelessPhones,
+      showPlayer: saved.showPlayer,
+      showNavigation: saved.showNavigation,
     );
 
     // Both for as long as the car runs, like the head unit itself.
@@ -197,6 +222,8 @@ class AndroidAutoService {
     // Whether the phone's picture is live changes on a notification rather
     // than an event, since the head unit only knows once it has asked.
     _controller!.addListener(_onControllerChanged);
+    _controller!.mediaPlayback.listen(_onMedia);
+    _controller!.navigation.listen(_onNavigation);
     _bluetoothConnected = {
       for (final device in Bluetooth.devices)
         if (device.connected) device.address,
@@ -308,6 +335,7 @@ class AndroidAutoService {
     _wirelessOffered = false;
     _wirelessPhone = null;
     _connection = null;
+    _forgetPhoneState();
     _publish();
   }
 
@@ -461,6 +489,9 @@ class AndroidAutoService {
         _problem = null;
         if (previous != AndroidAutoConnectionState.connected) {
           unawaited(_onConnected());
+          // In case the phone spoke up a moment before it counted as
+          // connected.
+          _publishPhoneState();
         }
       case AndroidAutoConnectionState.error:
         final message = event.message;
@@ -488,6 +519,10 @@ class AndroidAutoService {
   void _onPhoneLost() {
     SmartifyOsLog.info(_tag, 'The phone went away');
     _connection = null;
+    // Whatever it was playing or guiding towards is not true any more, and a
+    // turn left on screen after the phone has gone is the one thing a head
+    // unit must never show.
+    _forgetPhoneState();
     _armIdleTimer();
     // A phone that dropped off the cable may well still be on Bluetooth.
     unawaited(_tryWireless());
@@ -634,6 +669,76 @@ class AndroidAutoService {
   bool _knownPhoneConnected(Set<String> addresses) =>
       state.usesWireless && addresses.any(state.wirelessPhones.contains);
 
+  // ── What the phone is doing ────────────────────────────────────────────────
+
+  bool get _phoneConnected =>
+      _running && _headUnit == AndroidAutoConnectionState.connected;
+
+  /// A new track, or news about the one playing.
+  ///
+  /// The phone says where playback is only when that changes (a new song, a
+  /// pause, a skip), and expects the head unit to count on by itself in
+  /// between. So the moment is noted only when the position or whether it
+  /// plays actually changed: news of something else (the cover arriving)
+  /// must not reset the count to a position that is seconds old by now.
+  void _onMedia(AndroidAutoMediaInfo media) {
+    final previous = _media;
+    _media = media;
+    if (previous == null ||
+        media.position != previous.position ||
+        media.state != previous.state ||
+        media.song != previous.song) {
+      _mediaPositionAt = DateTime.now();
+    }
+
+    // A new MemoryImage is a new decode, so only make one for a new cover.
+    // The same cover arrives again with every update, as new bytes.
+    final art = media.albumArt;
+    if (art == null) {
+      _artworkBytes = null;
+      _artwork = null;
+    } else if (!listEquals(art, _artworkBytes)) {
+      _artworkBytes = art;
+      _artwork = MemoryImage(art);
+    }
+    _publishPhoneState();
+  }
+
+  void _onNavigation(AndroidAutoNavigation navigation) {
+    _navigation.forceSet(
+      _phoneConnected && navigation.isGuiding ? navigation : null,
+    );
+  }
+
+  void _publishPhoneState() {
+    final media = _media;
+    if (!_phoneConnected ||
+        media == null ||
+        (media.isEmpty && media.state != AndroidAutoPlaybackState.playing)) {
+      _nowPlaying.value = null;
+      return;
+    }
+    _nowPlaying.value = MediaPlayerInfo(
+      title: media.song,
+      artist: media.artist,
+      album: media.album,
+      artwork: _artwork,
+      isPlaying: media.isPlaying,
+      duration: media.duration,
+      position: media.position,
+      positionReportedAt: media.position == null ? null : _mediaPositionAt,
+    );
+  }
+
+  void _forgetPhoneState() {
+    _media = null;
+    _mediaPositionAt = null;
+    _artworkBytes = null;
+    _artwork = null;
+    _nowPlaying.value = null;
+    _navigation.value = null;
+  }
+
   // ── The driver's choices ───────────────────────────────────────────────────
 
   /// Whether Android Auto starts by itself.
@@ -671,6 +776,20 @@ class AndroidAutoService {
       _wirelessPhone = null;
       _publish();
     }
+  }
+
+  /// Whether what the phone is playing gets a card on the home screen.
+  Future<void> setShowPlayer(bool on) async {
+    if (on == state.showPlayer) return;
+    _state.value = state.copyWith(showPlayer: on);
+    await _store.saveShowPlayer(on);
+  }
+
+  /// Whether the phone's directions get a card on the home screen.
+  Future<void> setShowNavigation(bool on) async {
+    if (on == state.showNavigation) return;
+    _state.value = state.copyWith(showNavigation: on);
+    await _store.saveShowNavigation(on);
   }
 
   /// Forgets every phone that starts Android Auto over Bluetooth.

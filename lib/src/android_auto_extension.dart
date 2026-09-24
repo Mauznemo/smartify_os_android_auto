@@ -3,6 +3,7 @@ import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_
 import 'package:smartify_os_android_auto/src/services/android_auto/models/android_auto_wireless_network.dart';
 import 'package:smartify_os_core/app_list.dart';
 import 'package:smartify_os_core/extensions.dart';
+import 'package:smartify_os_core/home_widgets.dart';
 import 'package:smartify_os_core/settings.dart';
 
 /// Android Auto on the car's screen: plug a phone in, or connect it over
@@ -25,6 +26,9 @@ import 'package:smartify_os_core/settings.dart';
 ///   bar and a button to stop it.
 /// * A page in Settings under Connectivity, with a switch to have it start
 ///   on its own.
+/// * Two cards on the home screen while a phone is connected: what it is
+///   playing (in place of the Bluetooth player, with the cover), and the next
+///   turn while it guides. Each can be switched off in Settings.
 ///
 /// Where a phone was plugged in, it projects over the cable. Otherwise a phone
 /// connected over Bluetooth gets a Wi-Fi hotspot brought up for it and
@@ -86,5 +90,6 @@ class AndroidAutoExtension extends SmartifyOsExtension {
 
     SmartifyOsAppList.addEntry(androidAutoAppListEntry());
     SmartifyOsSettings.addPage(androidAutoSettingsPage());
+    SmartifyOsHomeWidgets.addWidgets(androidAutoHomeWidgets());
   }
 }

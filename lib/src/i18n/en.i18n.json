@@ -23,6 +23,13 @@
     "autostart_question_yes": "Start on its own",
     "autostart_question_no": "Not now"
   },
+  "navigation": {
+    "rerouting": "Finding a new route",
+    "exit": "Exit $number",
+    "arrive": "Arrive $time",
+    "minutes": "$minutes min",
+    "hours": "$hours h $minutes min"
+  },
   "settings": {
     "status": "Status",
     "last_problem": "Last problem",
@@ -40,6 +47,11 @@
     "forget_phones": "Forget these phones",
     "forget_phones_hint": "They start Android Auto over Bluetooth again after connecting without a cable once more",
     "pair_again_title": "Paired before Android Auto was installed?",
-    "pair_again_hint": "Forget that phone in Bluetooth settings and pair it again once. Until then it never offers to connect without a cable"
+    "pair_again_hint": "Forget that phone in Bluetooth settings and pair it again once. Until then it never offers to connect without a cable",
+    "home_screen": "Home screen",
+    "show_player": "Show what is playing",
+    "show_player_hint": "Instead of the Bluetooth player, while a phone is connected",
+    "show_navigation": "Show directions",
+    "show_navigation_hint": "The next turn, while the phone is guiding you somewhere"
   }
 }

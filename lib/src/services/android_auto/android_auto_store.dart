@@ -18,6 +18,8 @@ class AndroidAutoStore {
   static const _askedKey = 'smartify_os.android_auto.asked_about_autostart';
   static const _passphraseKey = 'smartify_os.android_auto.hotspot_passphrase';
   static const _phonesKey = 'smartify_os.android_auto.wireless_phones';
+  static const _playerKey = 'smartify_os.android_auto.show_player';
+  static const _navigationKey = 'smartify_os.android_auto.show_navigation';
 
   const AndroidAutoStore();
 
@@ -37,6 +39,8 @@ class AndroidAutoStore {
         askedAboutAutostart: prefs.getBool(_askedKey) ?? false,
         hotspotPassphrase: passphrase,
         wirelessPhones: {...?prefs.getStringList(_phonesKey)},
+        showPlayer: prefs.getBool(_playerKey) ?? true,
+        showNavigation: prefs.getBool(_navigationKey) ?? true,
       );
     } on Object catch (error) {
       SmartifyOsLog.warning(_tag, 'Could not read the saved settings', error);
@@ -52,6 +56,12 @@ class AndroidAutoStore {
 
   Future<void> saveAskedAboutAutostart() =>
       _write((prefs) => prefs.setBool(_askedKey, true));
+
+  Future<void> saveShowPlayer(bool on) =>
+      _write((prefs) => prefs.setBool(_playerKey, on));
+
+  Future<void> saveShowNavigation(bool on) =>
+      _write((prefs) => prefs.setBool(_navigationKey, on));
 
   Future<void> saveWirelessPhones(Set<String> addresses) =>
       _write((prefs) => prefs.setStringList(_phonesKey, addresses.toList()));
@@ -87,6 +97,8 @@ class AndroidAutoSaved {
   final bool askedAboutAutostart;
   final String hotspotPassphrase;
   final Set<String> wirelessPhones;
+  final bool showPlayer;
+  final bool showNavigation;
 
   const AndroidAutoSaved({
     required this.hotspotPassphrase,
@@ -94,5 +106,7 @@ class AndroidAutoSaved {
     this.wireless = true,
     this.askedAboutAutostart = false,
     this.wirelessPhones = const {},
+    this.showPlayer = true,
+    this.showNavigation = true,
   });
 }

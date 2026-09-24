@@ -80,6 +80,14 @@ abstract class AndroidAutoState with _$AndroidAutoState {
     /// own when they connect: every phone that has used it here without a
     /// cable.
     @Default(<String>{}) Set<String> wirelessPhones,
+
+    /// Whether what the phone is playing gets a card on the home screen,
+    /// standing in for the Bluetooth one.
+    @Default(true) bool showPlayer,
+
+    /// Whether the phone's turn by turn directions get a card on the home
+    /// screen while it guides.
+    @Default(true) bool showNavigation,
   }) = _AndroidAutoState;
 
   /// Whether Android Auto is running, whatever it is doing.

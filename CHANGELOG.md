@@ -1,3 +1,13 @@
+## Unreleased
+
+### Added
+
+- home screen cards for what the phone plays and the next turn
+
+### Fixed
+
+- blank or frozen screen while not projecting
+
 ## 0.1.0
 
 ### Added

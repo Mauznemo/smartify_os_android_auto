@@ -30,7 +30,11 @@ mixin _$AndroidAutoState {
  String? get hotspotName;/// The Bluetooth addresses of the phones that start Android Auto on their
 /// own when they connect: every phone that has used it here without a
 /// cable.
- Set<String> get wirelessPhones;
+ Set<String> get wirelessPhones;/// Whether what the phone is playing gets a card on the home screen,
+/// standing in for the Bluetooth one.
+ bool get showPlayer;/// Whether the phone's turn by turn directions get a card on the home
+/// screen while it guides.
+ bool get showNavigation;
 /// Create a copy of AndroidAutoState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -41,16 +45,16 @@ $AndroidAutoStateCopyWith<AndroidAutoState> get copyWith => _$AndroidAutoStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AndroidAutoState&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.connection, connection) || other.connection == connection)&&(identical(other.problem, problem) || other.problem == problem)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.wireless, wireless) || other.wireless == wireless)&&(identical(other.wirelessAvailable, wirelessAvailable) || other.wirelessAvailable == wirelessAvailable)&&(identical(other.hotspotName, hotspotName) || other.hotspotName == hotspotName)&&const DeepCollectionEquality().equals(other.wirelessPhones, wirelessPhones));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AndroidAutoState&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.connection, connection) || other.connection == connection)&&(identical(other.problem, problem) || other.problem == problem)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.wireless, wireless) || other.wireless == wireless)&&(identical(other.wirelessAvailable, wirelessAvailable) || other.wirelessAvailable == wirelessAvailable)&&(identical(other.hotspotName, hotspotName) || other.hotspotName == hotspotName)&&const DeepCollectionEquality().equals(other.wirelessPhones, wirelessPhones)&&(identical(other.showPlayer, showPlayer) || other.showPlayer == showPlayer)&&(identical(other.showNavigation, showNavigation) || other.showNavigation == showNavigation));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,phase,connection,problem,autostart,wireless,wirelessAvailable,hotspotName,const DeepCollectionEquality().hash(wirelessPhones));
+int get hashCode => Object.hash(runtimeType,phase,connection,problem,autostart,wireless,wirelessAvailable,hotspotName,const DeepCollectionEquality().hash(wirelessPhones),showPlayer,showNavigation);
 
 @override
 String toString() {
-  return 'AndroidAutoState(phase: $phase, connection: $connection, problem: $problem, autostart: $autostart, wireless: $wireless, wirelessAvailable: $wirelessAvailable, hotspotName: $hotspotName, wirelessPhones: $wirelessPhones)';
+  return 'AndroidAutoState(phase: $phase, connection: $connection, problem: $problem, autostart: $autostart, wireless: $wireless, wirelessAvailable: $wirelessAvailable, hotspotName: $hotspotName, wirelessPhones: $wirelessPhones, showPlayer: $showPlayer, showNavigation: $showNavigation)';
 }
 
 
@@ -61,7 +65,7 @@ abstract mixin class $AndroidAutoStateCopyWith<$Res>  {
   factory $AndroidAutoStateCopyWith(AndroidAutoState value, $Res Function(AndroidAutoState) _then) = _$AndroidAutoStateCopyWithImpl;
 @useResult
 $Res call({
- AndroidAutoPhase phase, AndroidAutoConnection? connection, String? problem, bool autostart, bool wireless, bool wirelessAvailable, String? hotspotName, Set<String> wirelessPhones
+ AndroidAutoPhase phase, AndroidAutoConnection? connection, String? problem, bool autostart, bool wireless, bool wirelessAvailable, String? hotspotName, Set<String> wirelessPhones, bool showPlayer, bool showNavigation
 });
 
 
@@ -78,7 +82,7 @@ class _$AndroidAutoStateCopyWithImpl<$Res>
 
 /// Create a copy of AndroidAutoState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? phase = null,Object? connection = freezed,Object? problem = freezed,Object? autostart = null,Object? wireless = null,Object? wirelessAvailable = null,Object? hotspotName = freezed,Object? wirelessPhones = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? phase = null,Object? connection = freezed,Object? problem = freezed,Object? autostart = null,Object? wireless = null,Object? wirelessAvailable = null,Object? hotspotName = freezed,Object? wirelessPhones = null,Object? showPlayer = null,Object? showNavigation = null,}) {
   return _then(_self.copyWith(
 phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_non_nullable
 as AndroidAutoPhase,connection: freezed == connection ? _self.connection : connection // ignore: cast_nullable_to_non_nullable
@@ -88,7 +92,9 @@ as bool,wireless: null == wireless ? _self.wireless : wireless // ignore: cast_n
 as bool,wirelessAvailable: null == wirelessAvailable ? _self.wirelessAvailable : wirelessAvailable // ignore: cast_nullable_to_non_nullable
 as bool,hotspotName: freezed == hotspotName ? _self.hotspotName : hotspotName // ignore: cast_nullable_to_non_nullable
 as String?,wirelessPhones: null == wirelessPhones ? _self.wirelessPhones : wirelessPhones // ignore: cast_nullable_to_non_nullable
-as Set<String>,
+as Set<String>,showPlayer: null == showPlayer ? _self.showPlayer : showPlayer // ignore: cast_nullable_to_non_nullable
+as bool,showNavigation: null == showNavigation ? _self.showNavigation : showNavigation // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -173,10 +179,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AndroidAutoPhase phase,  AndroidAutoConnection? connection,  String? problem,  bool autostart,  bool wireless,  bool wirelessAvailable,  String? hotspotName,  Set<String> wirelessPhones)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( AndroidAutoPhase phase,  AndroidAutoConnection? connection,  String? problem,  bool autostart,  bool wireless,  bool wirelessAvailable,  String? hotspotName,  Set<String> wirelessPhones,  bool showPlayer,  bool showNavigation)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AndroidAutoState() when $default != null:
-return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that.wireless,_that.wirelessAvailable,_that.hotspotName,_that.wirelessPhones);case _:
+return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that.wireless,_that.wirelessAvailable,_that.hotspotName,_that.wirelessPhones,_that.showPlayer,_that.showNavigation);case _:
   return orElse();
 
 }
@@ -194,10 +200,10 @@ return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AndroidAutoPhase phase,  AndroidAutoConnection? connection,  String? problem,  bool autostart,  bool wireless,  bool wirelessAvailable,  String? hotspotName,  Set<String> wirelessPhones)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( AndroidAutoPhase phase,  AndroidAutoConnection? connection,  String? problem,  bool autostart,  bool wireless,  bool wirelessAvailable,  String? hotspotName,  Set<String> wirelessPhones,  bool showPlayer,  bool showNavigation)  $default,) {final _that = this;
 switch (_that) {
 case _AndroidAutoState():
-return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that.wireless,_that.wirelessAvailable,_that.hotspotName,_that.wirelessPhones);case _:
+return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that.wireless,_that.wirelessAvailable,_that.hotspotName,_that.wirelessPhones,_that.showPlayer,_that.showNavigation);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -214,10 +220,10 @@ return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AndroidAutoPhase phase,  AndroidAutoConnection? connection,  String? problem,  bool autostart,  bool wireless,  bool wirelessAvailable,  String? hotspotName,  Set<String> wirelessPhones)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( AndroidAutoPhase phase,  AndroidAutoConnection? connection,  String? problem,  bool autostart,  bool wireless,  bool wirelessAvailable,  String? hotspotName,  Set<String> wirelessPhones,  bool showPlayer,  bool showNavigation)?  $default,) {final _that = this;
 switch (_that) {
 case _AndroidAutoState() when $default != null:
-return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that.wireless,_that.wirelessAvailable,_that.hotspotName,_that.wirelessPhones);case _:
+return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that.wireless,_that.wirelessAvailable,_that.hotspotName,_that.wirelessPhones,_that.showPlayer,_that.showNavigation);case _:
   return null;
 
 }
@@ -229,7 +235,7 @@ return $default(_that.phase,_that.connection,_that.problem,_that.autostart,_that
 
 
 class _AndroidAutoState extends AndroidAutoState {
-  const _AndroidAutoState({this.phase = AndroidAutoPhase.stopped, this.connection, this.problem, this.autostart = false, this.wireless = true, this.wirelessAvailable = false, this.hotspotName, final  Set<String> wirelessPhones = const <String>{}}): _wirelessPhones = wirelessPhones,super._();
+  const _AndroidAutoState({this.phase = AndroidAutoPhase.stopped, this.connection, this.problem, this.autostart = false, this.wireless = true, this.wirelessAvailable = false, this.hotspotName, final  Set<String> wirelessPhones = const <String>{}, this.showPlayer = true, this.showNavigation = true}): _wirelessPhones = wirelessPhones,super._();
   
 
 @override@JsonKey() final  AndroidAutoPhase phase;
@@ -265,6 +271,12 @@ class _AndroidAutoState extends AndroidAutoState {
   return EqualUnmodifiableSetView(_wirelessPhones);
 }
 
+/// Whether what the phone is playing gets a card on the home screen,
+/// standing in for the Bluetooth one.
+@override@JsonKey() final  bool showPlayer;
+/// Whether the phone's turn by turn directions get a card on the home
+/// screen while it guides.
+@override@JsonKey() final  bool showNavigation;
 
 /// Create a copy of AndroidAutoState
 /// with the given fields replaced by the non-null parameter values.
@@ -276,16 +288,16 @@ _$AndroidAutoStateCopyWith<_AndroidAutoState> get copyWith => __$AndroidAutoStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AndroidAutoState&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.connection, connection) || other.connection == connection)&&(identical(other.problem, problem) || other.problem == problem)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.wireless, wireless) || other.wireless == wireless)&&(identical(other.wirelessAvailable, wirelessAvailable) || other.wirelessAvailable == wirelessAvailable)&&(identical(other.hotspotName, hotspotName) || other.hotspotName == hotspotName)&&const DeepCollectionEquality().equals(other._wirelessPhones, _wirelessPhones));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AndroidAutoState&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.connection, connection) || other.connection == connection)&&(identical(other.problem, problem) || other.problem == problem)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.wireless, wireless) || other.wireless == wireless)&&(identical(other.wirelessAvailable, wirelessAvailable) || other.wirelessAvailable == wirelessAvailable)&&(identical(other.hotspotName, hotspotName) || other.hotspotName == hotspotName)&&const DeepCollectionEquality().equals(other._wirelessPhones, _wirelessPhones)&&(identical(other.showPlayer, showPlayer) || other.showPlayer == showPlayer)&&(identical(other.showNavigation, showNavigation) || other.showNavigation == showNavigation));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,phase,connection,problem,autostart,wireless,wirelessAvailable,hotspotName,const DeepCollectionEquality().hash(_wirelessPhones));
+int get hashCode => Object.hash(runtimeType,phase,connection,problem,autostart,wireless,wirelessAvailable,hotspotName,const DeepCollectionEquality().hash(_wirelessPhones),showPlayer,showNavigation);
 
 @override
 String toString() {
-  return 'AndroidAutoState(phase: $phase, connection: $connection, problem: $problem, autostart: $autostart, wireless: $wireless, wirelessAvailable: $wirelessAvailable, hotspotName: $hotspotName, wirelessPhones: $wirelessPhones)';
+  return 'AndroidAutoState(phase: $phase, connection: $connection, problem: $problem, autostart: $autostart, wireless: $wireless, wirelessAvailable: $wirelessAvailable, hotspotName: $hotspotName, wirelessPhones: $wirelessPhones, showPlayer: $showPlayer, showNavigation: $showNavigation)';
 }
 
 
@@ -296,7 +308,7 @@ abstract mixin class _$AndroidAutoStateCopyWith<$Res> implements $AndroidAutoSta
   factory _$AndroidAutoStateCopyWith(_AndroidAutoState value, $Res Function(_AndroidAutoState) _then) = __$AndroidAutoStateCopyWithImpl;
 @override @useResult
 $Res call({
- AndroidAutoPhase phase, AndroidAutoConnection? connection, String? problem, bool autostart, bool wireless, bool wirelessAvailable, String? hotspotName, Set<String> wirelessPhones
+ AndroidAutoPhase phase, AndroidAutoConnection? connection, String? problem, bool autostart, bool wireless, bool wirelessAvailable, String? hotspotName, Set<String> wirelessPhones, bool showPlayer, bool showNavigation
 });
 
 
@@ -313,7 +325,7 @@ class __$AndroidAutoStateCopyWithImpl<$Res>
 
 /// Create a copy of AndroidAutoState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? phase = null,Object? connection = freezed,Object? problem = freezed,Object? autostart = null,Object? wireless = null,Object? wirelessAvailable = null,Object? hotspotName = freezed,Object? wirelessPhones = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? phase = null,Object? connection = freezed,Object? problem = freezed,Object? autostart = null,Object? wireless = null,Object? wirelessAvailable = null,Object? hotspotName = freezed,Object? wirelessPhones = null,Object? showPlayer = null,Object? showNavigation = null,}) {
   return _then(_AndroidAutoState(
 phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_non_nullable
 as AndroidAutoPhase,connection: freezed == connection ? _self.connection : connection // ignore: cast_nullable_to_non_nullable
@@ -323,7 +335,9 @@ as bool,wireless: null == wireless ? _self.wireless : wireless // ignore: cast_n
 as bool,wirelessAvailable: null == wirelessAvailable ? _self.wirelessAvailable : wirelessAvailable // ignore: cast_nullable_to_non_nullable
 as bool,hotspotName: freezed == hotspotName ? _self.hotspotName : hotspotName // ignore: cast_nullable_to_non_nullable
 as String?,wirelessPhones: null == wirelessPhones ? _self._wirelessPhones : wirelessPhones // ignore: cast_nullable_to_non_nullable
-as Set<String>,
+as Set<String>,showPlayer: null == showPlayer ? _self.showPlayer : showPlayer // ignore: cast_nullable_to_non_nullable
+as bool,showNavigation: null == showNavigation ? _self.showNavigation : showNavigation // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

@@ -2,6 +2,7 @@ import 'package:android_auto/android_auto.dart';
 import 'package:flutter/widgets.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_service.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/models/android_auto_state.dart';
+import 'package:smartify_os_core/media.dart';
 
 /// Android Auto, from anywhere in your app.
 ///
@@ -43,6 +44,15 @@ class SmartifyOsAndroidAuto {
   /// `setSpeed` and the rest). See the android_auto package for all of it.
   static AndroidAutoController? get controller => _service.controller;
 
+  /// What the connected phone is playing, the way the home screen's player
+  /// card shows it, or `null`. Watch `androidAutoNowPlayingProvider` to
+  /// follow it.
+  static MediaPlayerInfo? get nowPlaying => _service.nowPlaying;
+
+  /// The guidance in progress, or `null` while no connected phone is guiding.
+  /// Watch `androidAutoNavigationProvider` to follow it.
+  static AndroidAutoNavigation? get navigation => _service.navigation;
+
   /// Starts Android Auto: a phone on the cable projects straight away, and
   /// one connected over Bluetooth is offered it without a cable. Does
   /// nothing if it is already running.
@@ -63,6 +73,15 @@ class SmartifyOsAndroidAuto {
   /// Whether Android Auto may connect without a cable. Remembered between
   /// drives.
   static Future<void> setWireless(bool on) => _service.setWireless(on);
+
+  /// Whether what the phone is playing gets a card on the home screen.
+  /// Remembered between drives.
+  static Future<void> setShowPlayer(bool on) => _service.setShowPlayer(on);
+
+  /// Whether the phone's directions get a card on the home screen.
+  /// Remembered between drives.
+  static Future<void> setShowNavigation(bool on) =>
+      _service.setShowNavigation(on);
 
   /// Forgets every phone that starts Android Auto over Bluetooth. They are
   /// learned again the next time they connect without a cable.

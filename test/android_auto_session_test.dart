@@ -48,10 +48,74 @@ void main() {
       expect(service.state.phase, AndroidAutoPhase.connected);
       expect(service.state.connection, AndroidAutoConnection.cable);
 
+      // What it plays, with the position counted on from the moment the
+      // phone said it.
+      phone.play(
+        const AndroidAutoMediaInfo(
+          song: 'Midnight Drive',
+          state: AndroidAutoPlaybackState.playing,
+          duration: Duration(minutes: 3),
+          position: Duration(seconds: 10),
+        ),
+      );
+      async.flushMicrotasks();
+      final playing = service.nowPlaying!;
+      expect(playing.title, 'Midnight Drive');
+      expect(playing.isPlaying, isTrue);
+      expect(playing.positionReportedAt, isNotNull);
+
+      // News about something else must not restart the count from a
+      // position that is seconds old by then.
+      async.elapse(const Duration(seconds: 3));
+      phone.play(
+        const AndroidAutoMediaInfo(
+          song: 'Midnight Drive',
+          album: 'Coastline',
+          state: AndroidAutoPlaybackState.playing,
+          duration: Duration(minutes: 3),
+          position: Duration(seconds: 10),
+        ),
+      );
+      async.flushMicrotasks();
+      expect(
+        service.nowPlaying!.positionReportedAt,
+        playing.positionReportedAt,
+      );
+      expect(service.nowPlaying!.album, 'Coastline');
+
+      // Directions only while the phone is actually guiding.
+      phone.guide(
+        const AndroidAutoNavigation(
+          status: AndroidAutoNavigationStatus.active,
+          road: 'Main Street',
+        ),
+      );
+      async.flushMicrotasks();
+      expect(service.navigation?.road, 'Main Street');
+      phone.guide(
+        const AndroidAutoNavigation(
+          status: AndroidAutoNavigationStatus.inactive,
+          road: 'Main Street',
+        ),
+      );
+      async.flushMicrotasks();
+      expect(service.navigation, isNull);
+      phone.guide(
+        const AndroidAutoNavigation(
+          status: AndroidAutoNavigationStatus.active,
+          road: 'Main Street',
+        ),
+      );
+      async.flushMicrotasks();
+
       // The cable comes out.
       phone.say(AndroidAutoConnectionState.searching, 'Lost the link.');
       async.flushMicrotasks();
       expect(service.state.phase, AndroidAutoPhase.reconnecting);
+      // Nothing it said is true any more, and an old turn on the home screen
+      // would be the worst thing to leave behind.
+      expect(service.nowPlaying, isNull);
+      expect(service.navigation, isNull);
 
       // It comes back in time: the picture is only there again once the new
       // stream has a frame, never on "connected" alone.
@@ -85,6 +149,8 @@ void main() {
 /// controller asks again.
 class _ScriptedPhone extends AndroidAutoPlatform {
   final _events = StreamController<AndroidAutoEvent>.broadcast();
+  final _media = StreamController<AndroidAutoMediaInfo>.broadcast();
+  final _navigation = StreamController<AndroidAutoNavigation>.broadcast();
   bool _video = false;
   int stops = 0;
 
@@ -98,6 +164,16 @@ class _ScriptedPhone extends AndroidAutoPlatform {
     _video = true;
     say(AndroidAutoConnectionState.connected);
   }
+
+  void play(AndroidAutoMediaInfo media) => _media.add(media);
+
+  void guide(AndroidAutoNavigation navigation) => _navigation.add(navigation);
+
+  @override
+  Stream<AndroidAutoMediaInfo> get mediaPlayback => _media.stream;
+
+  @override
+  Stream<AndroidAutoNavigation> get navigation => _navigation.stream;
 
   @override
   Future<bool> get hasVideo async => _video;

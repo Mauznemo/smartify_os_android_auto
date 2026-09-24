@@ -24,6 +24,17 @@ await SmartifyOs().init(
   own, whether it may connect without a cable, and which phones start it over Bluetooth.
 - The first time a phone connects, it asks whether Android Auto should start on its own
   from then on.
+- **Two cards on the home screen** while a phone is connected, each of which can be
+  switched off in Settings:
+  - what it is playing, with the cover, in place of the Bluetooth player (the phone
+    reports the same song over Bluetooth too). Play, pause, next and previous are the
+    keys Android Auto has, so those are the buttons;
+  - the next turn while it is guiding: the arrow, how far, onto which road, the lanes,
+    and when you get there.
+
+  They come from what the phone says rather than from its picture, so they work with
+  the Android Auto window closed. `SmartifyOsAndroidAuto.nowPlaying` and `.navigation`,
+  and the providers next to them, are the same data for a screen of your own.
 
 ## How a phone connects
 
