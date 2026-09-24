@@ -7,6 +7,7 @@
 ### Fixed
 
 - blank or frozen screen while not projecting
+- wrong aspect ratio and a relayout on the first automatic start
 
 ## 0.1.0
 

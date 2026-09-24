@@ -23,9 +23,10 @@ dependencies:
   # EXTENSIONS.md in the SmartifyOS repository.
   smartify_os_core: ">=0.0.1 <0.1.0"
 
-  # 0.1.5: measures the view right inside SmartifyOS's scaled canvas (0.1.4),
-  # and says when the phone's picture is live (hasVideo).
-  android_auto: ^0.1.5
+  # 0.1.6: measures the view right inside SmartifyOS's scaled canvas (0.1.4),
+  # says when the phone's picture is live (hasVideo, 0.1.5), and asks for a
+  # big enough frame when started before any view is laid out.
+  android_auto: ^0.1.6
 
   # The same ranges smartify_os_core uses, so the two never pull a car's app
   # in different directions.
@@ -42,7 +43,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   # A phone that does exactly what a test tells it to, at the time it says.
-  android_auto_platform_interface: ^0.1.5
+  android_auto_platform_interface: ^0.1.6
   fake_async: ^1.3.3
   build_runner: ^2.11.1
   riverpod_generator: ^4.0.3

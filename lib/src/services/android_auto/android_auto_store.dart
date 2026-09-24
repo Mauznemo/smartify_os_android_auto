@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' show Size;
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartify_os_core/utils.dart';
@@ -20,6 +21,8 @@ class AndroidAutoStore {
   static const _phonesKey = 'smartify_os.android_auto.wireless_phones';
   static const _playerKey = 'smartify_os.android_auto.show_player';
   static const _navigationKey = 'smartify_os.android_auto.show_navigation';
+  static const _viewWidthKey = 'smartify_os.android_auto.view_width';
+  static const _viewHeightKey = 'smartify_os.android_auto.view_height';
 
   const AndroidAutoStore();
 
@@ -33,7 +36,12 @@ class AndroidAutoStore {
         passphrase = _newPassphrase();
         await prefs.setString(_passphraseKey, passphrase);
       }
+      final viewWidth = prefs.getDouble(_viewWidthKey);
+      final viewHeight = prefs.getDouble(_viewHeightKey);
       return AndroidAutoSaved(
+        viewSize: viewWidth == null || viewHeight == null
+            ? null
+            : Size(viewWidth, viewHeight),
         autostart: prefs.getBool(_autostartKey) ?? false,
         wireless: prefs.getBool(_wirelessKey) ?? true,
         askedAboutAutostart: prefs.getBool(_askedKey) ?? false,
@@ -62,6 +70,11 @@ class AndroidAutoStore {
 
   Future<void> saveShowNavigation(bool on) =>
       _write((prefs) => prefs.setBool(_navigationKey, on));
+
+  Future<void> saveViewSize(Size size) => _write((prefs) async {
+    await prefs.setDouble(_viewWidthKey, size.width);
+    await prefs.setDouble(_viewHeightKey, size.height);
+  });
 
   Future<void> saveWirelessPhones(Set<String> addresses) =>
       _write((prefs) => prefs.setStringList(_phonesKey, addresses.toList()));
@@ -100,6 +113,10 @@ class AndroidAutoSaved {
   final bool showPlayer;
   final bool showNavigation;
 
+  /// The size the window's view last measured, in physical pixels, or `null`
+  /// before it was ever opened.
+  final Size? viewSize;
+
   const AndroidAutoSaved({
     required this.hotspotPassphrase,
     this.autostart = false,
@@ -108,5 +125,6 @@ class AndroidAutoSaved {
     this.wirelessPhones = const {},
     this.showPlayer = true,
     this.showNavigation = true,
+    this.viewSize,
   });
 }

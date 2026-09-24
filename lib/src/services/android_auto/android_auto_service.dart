@@ -88,6 +88,7 @@ class AndroidAutoService {
       const AndroidAutoWirelessNetwork.hotspot();
   String _passphrase = '';
   bool _askedAboutAutostart = false;
+  Size? _viewSize;
 
   AndroidAutoController? _controller;
   AndroidAutoConnectionState _headUnit = AndroidAutoConnectionState.idle;
@@ -175,6 +176,7 @@ class AndroidAutoService {
     final saved = await _store.load();
     _passphrase = saved.hotspotPassphrase;
     _askedAboutAutostart = saved.askedAboutAutostart;
+    _viewSize = saved.viewSize;
     final wirelessAvailable = _network is! AndroidAutoNoNetwork;
 
     try {
@@ -280,6 +282,16 @@ class AndroidAutoService {
     // error is not something the driver should read about, so errors are
     // held while it starts, and dropped once the head unit says it is
     // looking for a phone, which it only does when the cable side started.
+    // The phone is asked for its frame, shape and all, the moment it connects,
+    // and keeps it for the whole connection. A start with the window closed
+    // (starting on its own, or from a button of the car's) has no view to
+    // measure, so it is told what the view measured last time. Without that
+    // the phone draws a 16:9 picture that sits letterboxed until the window
+    // opens, and then lays out again, dropping the picture for a moment.
+    final viewSize = _viewSize;
+    if (!AndroidAutoWindow.isOpen && viewSize != null) {
+      controller.setViewSize(viewSize);
+    }
     _quietStart = !_wirelessOffered;
     await controller.start();
     if (session != _session) return;
@@ -345,6 +357,16 @@ class AndroidAutoService {
     final target = context ?? SmartifyOsNavigator.navigatorKey.currentContext;
     if (target == null) return;
     SmartifyOsNavigator.push(target, const AndroidAutoWindow());
+  }
+
+  /// Notes how big, in physical pixels, the window's view is, so a start with
+  /// the window closed can tell the phone. Called by the window whenever it is
+  /// laid out; the car's screen never changes, so this is almost always the
+  /// same number, and only a different one is saved.
+  void rememberViewSize(Size physicalSize) {
+    if (physicalSize == _viewSize) return;
+    _viewSize = physicalSize;
+    unawaited(_store.saveViewSize(physicalSize));
   }
 
   /// A phone connected over Bluetooth that should be offered Android Auto

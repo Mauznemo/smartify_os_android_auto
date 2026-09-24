@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:android_auto_platform_interface/android_auto_platform_interface.dart';
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartify_os_android_auto/android_auto.dart';
@@ -28,10 +29,15 @@ void main() {
       service.start(const AndroidAutoExtension());
       async.flushMicrotasks();
 
+      // The window measured its view on an earlier drive. Starting with it
+      // closed, the phone has to be told that size before it connects, or it
+      // lays out 16:9 and then again once the window opens.
+      service.rememberViewSize(const Size(1016, 506));
       service.startSession();
       // Past the moment a cable-only start holds its errors for.
       async.elapse(const Duration(milliseconds: 300));
       expect(service.state.phase, AndroidAutoPhase.waitingForPhone);
+      expect(phone.viewSizeAtStart, const Size(1016, 506));
 
       phone.say(AndroidAutoConnectionState.handshaking);
       async.flushMicrotasks();
@@ -152,7 +158,11 @@ class _ScriptedPhone extends AndroidAutoPlatform {
   final _media = StreamController<AndroidAutoMediaInfo>.broadcast();
   final _navigation = StreamController<AndroidAutoNavigation>.broadcast();
   bool _video = false;
+  Size? _viewSize;
   int stops = 0;
+
+  /// The view size the head unit knew when it was started.
+  Size? viewSizeAtStart;
 
   void say(AndroidAutoConnectionState state, [String? message]) {
     if (state != AndroidAutoConnectionState.connected) _video = false;
@@ -185,8 +195,14 @@ class _ScriptedPhone extends AndroidAutoPlatform {
   Future<int?> get textureId async => 1;
 
   @override
-  Future<void> start(AndroidAutoConfig config) async =>
-      say(AndroidAutoConnectionState.searching);
+  void setViewSize(double width, double height) =>
+      _viewSize = Size(width, height);
+
+  @override
+  Future<void> start(AndroidAutoConfig config) async {
+    viewSizeAtStart = _viewSize;
+    say(AndroidAutoConnectionState.searching);
+  }
 
   @override
   Future<void> stop() async {
