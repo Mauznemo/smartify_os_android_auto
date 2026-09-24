@@ -1,6 +1,6 @@
 The Android Auto extension for SmartifyOS, built on the `android_auto` plugin (https://github.com/Mauznemo/FlutterAndroidAuto, usually checked out at `../../FlutterAndroidAuto`).
 
-It follows SmartifyOS's own conventions (its `CLAUDE.md`) and the extension convention in its `EXTENSIONS.md`. Most importantly: only `package:smartify_os_core/<library>.dart`, never `src/`, and `smartify_os_core` stays a version range in `pubspec.yaml`. Working on it on its own needs a `pubspec_overrides.yaml`, see `README.md`.
+It follows SmartifyOS's own conventions (its `CLAUDE.md`) and the extension convention in its `EXTENSIONS.md`. Most importantly: only `package:smartify_os_core/<library>.dart`, never `src/`; `smartify_os_core` is a lower bound only in `pubspec.yaml`, and packages core also uses are `any`; and no `riverpod_generator`, so the providers are written out by hand. Working on it on its own needs a `pubspec_overrides.yaml`, see `README.md`.
 
 Things about the plugin that are easy to break and do not show until a phone is involved:
 

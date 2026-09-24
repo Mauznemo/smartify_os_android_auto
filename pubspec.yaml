@@ -18,33 +18,29 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # A range, never a git url or a path: the car's app decides which
-  # SmartifyOS it runs, and this only says which ones it works with. See
-  # EXTENSIONS.md in the SmartifyOS repository.
-  smartify_os_core: ">=0.0.1 <0.1.0"
+  # The oldest SmartifyOS this works with. The car's app picks which one it
+  # actually runs, see EXTENSIONS.md in the SmartifyOS repository.
+  smartify_os_core: ">=0.0.1"
 
   # 0.1.6: measures the view right inside SmartifyOS's scaled canvas (0.1.4),
   # says when the phone's picture is live (hasVideo, 0.1.5), and asks for a
   # big enough frame when started before any view is laid out.
   android_auto: ^0.1.6
 
-  # The same ranges smartify_os_core uses, so the two never pull a car's app
-  # in different directions.
-  flutter_riverpod: ^3.2.1
-  riverpod_annotation: ^4.0.2
-  freezed_annotation: ^3.1.0
-  shared_preferences: ^2.5.4
-  slang: ^4.12.1
-  slang_flutter: ^4.12.1
-  flutter_svg: ^2.2.3
+  # Packages SmartifyOS uses itself: the car's SmartifyOS picks the version.
+  flutter_riverpod: any
+  freezed_annotation: any
+  shared_preferences: any
+  slang: any
+  slang_flutter: any
+  flutter_svg: any
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   # A phone that does exactly what a test tells it to, at the time it says.
-  android_auto_platform_interface: ^0.1.6
+  android_auto_platform_interface: any
   fake_async: ^1.3.3
   build_runner: ^2.11.1
-  riverpod_generator: ^4.0.3
   freezed: ^3.2.3
