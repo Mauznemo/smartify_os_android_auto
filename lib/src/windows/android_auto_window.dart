@@ -60,6 +60,9 @@ class _AndroidAutoWindowState extends ConsumerState<AndroidAutoWindow> {
       title: t.android_auto.title,
       child: controller == null
           ? const SizedBox.shrink()
+          // The view shows the placeholder whenever the phone's picture is not
+          // live: until the first frame (a good twenty seconds over Wi-Fi),
+          // after a stop, and while a lost phone is being waited for.
           : AndroidAutoView(
               controller: controller,
               placeholder: _Placeholder(state: state),
@@ -68,8 +71,9 @@ class _AndroidAutoWindowState extends ConsumerState<AndroidAutoWindow> {
   }
 }
 
-/// What the window shows until the phone's picture arrives: what is going on,
-/// and what the driver can do about it.
+/// What the window shows whenever the phone's picture is not on screen: what
+/// is going on, and what the driver can do about it. Something is always
+/// written here, so a wait never looks like Android Auto has hung.
 class _Placeholder extends StatelessWidget {
   final AndroidAutoState state;
 
@@ -84,8 +88,14 @@ class _Placeholder extends StatelessWidget {
         state.usesWireless
             ? t.android_auto.hint_waiting
             : t.android_auto.hint_waiting_cable_only,
+      AndroidAutoPhase.startingOnPhone => t.android_auto.hint_starting_on_phone,
+      AndroidAutoPhase.reconnecting => t.android_auto.hint_reconnecting,
       _ => null,
     };
+    // Waiting for the driver needs no spinner, everything else is the car
+    // getting on with it.
+    final working =
+        state.isRunning && state.phase != AndroidAutoPhase.waitingForPhone;
     final problem = state.problem;
 
     return Center(
@@ -98,6 +108,14 @@ class _Placeholder extends StatelessWidget {
             children: [
               const AndroidAutoIcon(size: 64),
               const SizedBox(height: 24),
+              if (working) ...[
+                const SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(height: 16),
+              ],
               Text(
                 androidAutoStatusText(state),
                 style: text.heading,

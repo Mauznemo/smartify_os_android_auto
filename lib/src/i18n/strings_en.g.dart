@@ -74,6 +74,12 @@ class Translations$android_auto$en {
 	/// en: 'Connecting to your phone'
 	String get status_connecting => 'Connecting to your phone';
 
+	/// en: 'Starting Android Auto on your phone'
+	String get status_starting_on_phone => 'Starting Android Auto on your phone';
+
+	/// en: 'Reconnecting to your phone'
+	String get status_reconnecting => 'Reconnecting to your phone';
+
 	/// en: 'Connected with a cable'
 	String get status_connected_cable => 'Connected with a cable';
 
@@ -88,6 +94,15 @@ class Translations$android_auto$en {
 
 	/// en: 'Android Auto is not running'
 	String get hint_stopped => 'Android Auto is not running';
+
+	/// en: 'This can take a little while, especially without a cable'
+	String get hint_starting_on_phone => 'This can take a little while, especially without a cable';
+
+	/// en: 'Android Auto stops by itself if your phone does not come back'
+	String get hint_reconnecting => 'Android Auto stops by itself if your phone does not come back';
+
+	/// en: 'Your phone did not come back, so Android Auto stopped'
+	String get problem_phone_lost => 'Your phone did not come back, so Android Auto stopped';
 
 	/// en: 'Could not start the Wi-Fi hotspot: $reason'
 	String problem_hotspot({required Object reason}) => 'Could not start the Wi-Fi hotspot: ${reason}';
@@ -180,11 +195,16 @@ extension on Translations {
 			'android_auto.status_waiting' => 'Waiting for your phone',
 			'android_auto.status_starting_hotspot' => 'Starting the Wi-Fi hotspot',
 			'android_auto.status_connecting' => 'Connecting to your phone',
+			'android_auto.status_starting_on_phone' => 'Starting Android Auto on your phone',
+			'android_auto.status_reconnecting' => 'Reconnecting to your phone',
 			'android_auto.status_connected_cable' => 'Connected with a cable',
 			'android_auto.status_connected_wireless' => 'Connected over Wi-Fi',
 			'android_auto.hint_waiting' => 'Plug your phone in, or connect it over Bluetooth',
 			'android_auto.hint_waiting_cable_only' => 'Plug your phone in',
 			'android_auto.hint_stopped' => 'Android Auto is not running',
+			'android_auto.hint_starting_on_phone' => 'This can take a little while, especially without a cable',
+			'android_auto.hint_reconnecting' => 'Android Auto stops by itself if your phone does not come back',
+			'android_auto.problem_phone_lost' => 'Your phone did not come back, so Android Auto stopped',
 			'android_auto.problem_hotspot' => ({required Object reason}) => 'Could not start the Wi-Fi hotspot: ${reason}',
 			'android_auto.autostart_question_title' => 'Start Android Auto on its own?',
 			'android_auto.autostart_question_message' => 'Next time your phone is plugged in, or connects over Bluetooth after using Android Auto without a cable here, Android Auto can start by itself. You can change this in Settings.',

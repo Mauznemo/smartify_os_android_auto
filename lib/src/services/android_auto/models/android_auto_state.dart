@@ -17,8 +17,17 @@ enum AndroidAutoPhase {
   /// A phone was found and the two are agreeing how to talk.
   connecting,
 
-  /// The phone is projecting.
+  /// The phone has agreed and is starting Android Auto, but has not sent a
+  /// picture yet. Over Wi-Fi this can take a good twenty seconds.
+  startingOnPhone,
+
+  /// The phone is projecting, and its picture is on screen.
   connected,
+
+  /// The phone that was projecting went away (the cable came out, or the
+  /// Wi-Fi dropped), and it is being waited for. Android Auto stops by itself
+  /// if it does not come back.
+  reconnecting,
 }
 
 /// How the phone is connected, once it is.
@@ -76,7 +85,7 @@ abstract class AndroidAutoState with _$AndroidAutoState {
   /// Whether Android Auto is running, whatever it is doing.
   bool get isRunning => phase != AndroidAutoPhase.stopped;
 
-  /// Whether a phone is projecting right now.
+  /// Whether a phone is projecting right now, with its picture on screen.
   bool get isConnected => phase == AndroidAutoPhase.connected;
 
   /// Whether a phone connected over Bluetooth is looked for, too.

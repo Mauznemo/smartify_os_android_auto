@@ -52,6 +52,12 @@ class AndroidAutoService {
   /// and that has not had a phone yet waits until they stop it.
   static const idleTimeout = Duration(seconds: 60);
 
+  /// How long a phone that was projecting gets to come back after the cable
+  /// comes out or the Wi-Fi drops, before Android Auto stops by itself. The
+  /// head unit gets a phone on the cable back in about five seconds when it
+  /// can, and one on Wi-Fi as soon as the phone dials in again.
+  static const lostPhoneTimeout = Duration(seconds: 30);
+
   /// How long a session that found a phone on the cable gives it before a
   /// phone on Bluetooth gets offered Wi-Fi instead. The cable check only
   /// knows who made a device, so a charging cable to something else could
@@ -89,6 +95,9 @@ class AndroidAutoService {
   bool _running = false;
   bool _automatic = false;
   bool _hadPhone = false;
+  // The controller's hasVideo, as last seen, so the moment it turns true is
+  // noticed once.
+  bool _video = false;
   bool _startingHotspot = false;
   bool _wirelessOffered = false;
   bool _cableGraceOver = false;
@@ -185,6 +194,9 @@ class AndroidAutoService {
 
     // Both for as long as the car runs, like the head unit itself.
     _controller!.events.listen(_onHeadUnitEvent);
+    // Whether the phone's picture is live changes on a notification rather
+    // than an event, since the head unit only knows once it has asked.
+    _controller!.addListener(_onControllerChanged);
     _bluetoothConnected = {
       for (final device in Bluetooth.devices)
         if (device.connected) device.address,
@@ -412,19 +424,23 @@ class AndroidAutoService {
     await _controller!.startWireless();
   }
 
-  /// Ends a session nobody is using, see [idleTimeout].
+  /// Ends a session nobody is using: one whose phone went away and did not
+  /// come back within [lostPhoneTimeout], or one that started on its own and
+  /// found no phone within [idleTimeout].
   void _armIdleTimer() {
     _idleTimer?.cancel();
     if (!_running || _headUnit == AndroidAutoConnectionState.connected) return;
     if (!_automatic && !_hadPhone) return;
-    _idleTimer = Timer(idleTimeout, () {
+    final lost = _hadPhone;
+    final timeout = lost ? lostPhoneTimeout : idleTimeout;
+    _idleTimer = Timer(timeout, () {
       if (!_running || _headUnit == AndroidAutoConnectionState.connected) {
         return;
       }
-      SmartifyOsLog.info(
-        _tag,
-        'No phone for ${idleTimeout.inSeconds} s, stopping',
-      );
+      SmartifyOsLog.info(_tag, 'No phone for ${timeout.inSeconds} s, stopping');
+      // Said where the driver will look, so a window that suddenly says
+      // "not running" explains itself.
+      if (lost) _problem = t.android_auto.problem_phone_lost;
       unawaited(stopSession());
     });
   }
@@ -454,6 +470,7 @@ class AndroidAutoService {
           _problem = message;
           SmartifyOsLog.warning(_tag, message);
         }
+        if (previous == AndroidAutoConnectionState.connected) _onPhoneLost();
       case AndroidAutoConnectionState.searching when _quietStart:
         // The cable side is up, so whatever went wrong before this was the
         // Wi-Fi being offered with no network, see [startSession].
@@ -461,16 +478,19 @@ class AndroidAutoService {
       case AndroidAutoConnectionState.idle ||
           AndroidAutoConnectionState.searching ||
           AndroidAutoConnectionState.handshaking:
-        if (previous == AndroidAutoConnectionState.connected) {
-          SmartifyOsLog.info(_tag, 'The phone went away');
-          _connection = null;
-          _armIdleTimer();
-          // A phone that dropped off the cable may well still be on
-          // Bluetooth.
-          unawaited(_tryWireless());
-        }
+        if (previous == AndroidAutoConnectionState.connected) _onPhoneLost();
     }
     _publish();
+  }
+
+  /// The connection to a phone ended while the session carries on, and the
+  /// head unit is trying to get it back.
+  void _onPhoneLost() {
+    SmartifyOsLog.info(_tag, 'The phone went away');
+    _connection = null;
+    _armIdleTimer();
+    // A phone that dropped off the cable may well still be on Bluetooth.
+    unawaited(_tryWireless());
   }
 
   Future<void> _onConnected() async {
@@ -495,11 +515,30 @@ class AndroidAutoService {
     if (!cable && phone != null) _rememberWirelessPhone(phone);
     _publish();
 
+    // Already now rather than once the picture is there, so the driver sees
+    // Android Auto starting instead of wondering whether anything happened.
     if (_automatic) openWindow();
+  }
+
+  /// Follows the controller's [AndroidAutoController.hasVideo], which is what
+  /// tells "the phone agreed to project" (connected, a good twenty seconds
+  /// early over Wi-Fi) apart from "its picture is on screen".
+  void _onControllerChanged() {
+    final live = _controller!.hasVideo;
+    if (live == _video) return;
+    _video = live;
+    if (!_running) return;
+    if (live) unawaited(_onPicture());
+    _publish();
+  }
+
+  /// The phone's picture is on screen: from here Android Auto visibly works.
+  Future<void> _onPicture() async {
+    SmartifyOsLog.info(_tag, 'The phone is projecting');
     await _askAboutAutostart();
   }
 
-  /// Asks once, the first time a phone connects, whether Android Auto should
+  /// Asks once, the first time a phone projects, whether Android Auto should
   /// start on its own from now on. Few drivers would think to look in
   /// Settings for it.
   Future<void> _askAboutAutostart() async {
@@ -657,8 +696,12 @@ class AndroidAutoService {
       phase = AndroidAutoPhase.startingHotspot;
     } else {
       phase = switch (_headUnit) {
-        AndroidAutoConnectionState.connected => AndroidAutoPhase.connected,
+        AndroidAutoConnectionState.connected when _video =>
+          AndroidAutoPhase.connected,
+        AndroidAutoConnectionState.connected =>
+          AndroidAutoPhase.startingOnPhone,
         AndroidAutoConnectionState.handshaking => AndroidAutoPhase.connecting,
+        _ when _hadPhone => AndroidAutoPhase.reconnecting,
         _ => AndroidAutoPhase.waitingForPhone,
       };
     }
