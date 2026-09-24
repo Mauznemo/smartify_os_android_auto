@@ -1,0 +1,7 @@
+input_directory: lib/src/i18n
+input_file_pattern: .i18n.json
+
+# New strings are added in English first and translated later. Without this,
+# every other locale fails to compile until it has caught up; with it, a
+# missing translation just shows the English text.
+fallback_strategy: base_locale

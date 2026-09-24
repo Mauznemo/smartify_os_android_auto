@@ -1,0 +1,40 @@
+{
+  "android_auto": {
+    "title": "Android Auto",
+    "start": "Start",
+    "stop": "Stop",
+    "status_stopped": "Not running",
+    "status_waiting": "Waiting for your phone",
+    "status_starting_hotspot": "Starting the Wi-Fi hotspot",
+    "status_connecting": "Connecting to your phone",
+    "status_connected_cable": "Connected with a cable",
+    "status_connected_wireless": "Connected over Wi-Fi",
+    "hint_waiting": "Plug your phone in, or connect it over Bluetooth",
+    "hint_waiting_cable_only": "Plug your phone in",
+    "hint_stopped": "Android Auto is not running",
+    "problem_hotspot": "Could not start the Wi-Fi hotspot: $reason",
+    "autostart_question_title": "Start Android Auto on its own?",
+    "autostart_question_message": "Next time your phone is plugged in, or connects over Bluetooth after using Android Auto without a cable here, Android Auto can start by itself. You can change this in Settings.",
+    "autostart_question_yes": "Start on its own",
+    "autostart_question_no": "Not now"
+  },
+  "settings": {
+    "status": "Status",
+    "last_problem": "Last problem",
+    "start": "Start Android Auto",
+    "stop": "Stop Android Auto",
+    "autostart": "Start on its own",
+    "autostart_hint": "When a phone is plugged in, or a phone that used Android Auto without a cable here connects over Bluetooth",
+    "wireless": "Connect without a cable",
+    "wireless_hint_hotspot": "Starts a Wi-Fi hotspot for the phone. The car's own Wi-Fi is off while it is up",
+    "wireless_hint_existing": "The phone joins the Wi-Fi network the car is on",
+    "hotspot_name": "Wi-Fi hotspot",
+    "phones": "Phones",
+    "wireless_phones": "Start it over Bluetooth",
+    "wireless_phones_none": "None yet",
+    "forget_phones": "Forget these phones",
+    "forget_phones_hint": "They start Android Auto over Bluetooth again after connecting without a cable once more",
+    "pair_again_title": "Paired before Android Auto was installed?",
+    "pair_again_hint": "Forget that phone in Bluetooth settings and pair it again once. Until then it never offers to connect without a cable"
+  }
+}

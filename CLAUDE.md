@@ -1,0 +1,10 @@
+The Android Auto extension for SmartifyOS, built on the `android_auto` plugin (https://github.com/Mauznemo/FlutterAndroidAuto, usually checked out at `../../FlutterAndroidAuto`).
+
+It follows SmartifyOS's own conventions (its `CLAUDE.md`) and the extension convention in its `EXTENSIONS.md`. Most importantly: only `package:smartify_os_core/<library>.dart`, never `src/`, and `smartify_os_core` stays a version range in `pubspec.yaml`. Working on it on its own needs a `pubspec_overrides.yaml`, see `README.md`.
+
+Things about the plugin that are easy to break and do not show until a phone is involved:
+
+- **The controller is made once, at boot, with wireless in its transports, and never disposed.** Making it is what publishes the Android Auto service on Bluetooth, and a phone only reads that while pairing, so doing it lazily (when the window opens) means phones paired before the first start never offer wireless. The driver's "without a cable" switch only decides whether a session offers Wi-Fi, never whether the service is published.
+- **`start()` offers Wi-Fi on its own** because the transports include it, and with no network it reports that as an error event. A cable-only session is therefore `start()` then `stopWireless()`, with that one error cleared. When a phone is on Bluetooth, the network is made and `setWirelessConfig` called *before* `start()`, so the start offers the right one.
+- **Stopping bounces the phone's USB and Bluetooth**, which looks exactly like a phone arriving. That is what the autostart cooldown in `AndroidAutoService` is for.
+- The plugin's `AndroidAutoView` measures with `View.of(context).devicePixelRatio`, which is wrong inside SmartifyOS's scaled design canvas: the phone is asked for a slightly too large picture and it comes out soft. Reported as FlutterAndroidAuto#4, to be fixed there, not worked around here.

@@ -1,0 +1,44 @@
+name: smartify_os_android_auto
+description: "Android Auto for SmartifyOS: plug a phone in, or connect it over Bluetooth, and it projects."
+version: 0.1.0
+repository: https://github.com/Mauznemo/smartify_os_android_auto
+# android_auto links aasdk, which is GPL, so everything shipping it is too.
+license: GPL-3.0-or-later
+publish_to: none
+
+environment:
+  # The same as smartify_os_core. android_auto asks for a newer Dart than
+  # this, which pub enforces on its own; this only picks the language version
+  # the code here is written in, and freezed's output does not compile under
+  # 3.13's.
+  sdk: ^3.10.3
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # A range, never a git url or a path: the car's app decides which
+  # SmartifyOS it runs, and this only says which ones it works with. See
+  # EXTENSIONS.md in the SmartifyOS repository.
+  smartify_os_core: ">=0.0.1 <0.1.0"
+
+  android_auto: ^0.1.2
+
+  # The same ranges smartify_os_core uses, so the two never pull a car's app
+  # in different directions.
+  flutter_riverpod: ^3.2.1
+  riverpod_annotation: ^4.0.2
+  freezed_annotation: ^3.1.0
+  shared_preferences: ^2.5.4
+  slang: ^4.12.1
+  slang_flutter: ^4.12.1
+  flutter_svg: ^2.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.11.1
+  riverpod_generator: ^4.0.3
+  freezed: ^3.2.3

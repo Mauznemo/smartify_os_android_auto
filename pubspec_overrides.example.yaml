@@ -1,0 +1,23 @@
+# Copy this to pubspec_overrides.yaml to work on this package on its own.
+#
+# pubspec.yaml only says which SmartifyOS versions this works with, so on its
+# own nothing says where to get one. A car's app decides that for itself, and
+# this file is ignored whenever the package is used as a dependency, so it
+# only ever affects working on the package here.
+
+dependency_overrides:
+  smartify_os_core:
+    git:
+      url: https://github.com/Mauznemo/smartify_os_flutter_test.git
+      path: smartify_os_core
+      ref: main
+    # Working on SmartifyOS at the same time? Point at your checkout instead:
+    # path: ../smartify_os_core
+
+  # smartify_os_core needs this override itself, and an override only applies
+  # in the package it is written in, so it has to be repeated here. Keep it in
+  # step with smartify_os_core/pubspec.yaml.
+  flutter_angle:
+    git:
+      url: https://github.com/Mauznemo/flutter_angle.git
+      ref: main
