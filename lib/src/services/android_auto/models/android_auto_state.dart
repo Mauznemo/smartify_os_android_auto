@@ -88,6 +88,11 @@ abstract class AndroidAutoState with _$AndroidAutoState {
     /// Whether the phone's turn by turn directions get a card on the home
     /// screen while it guides.
     @Default(true) bool showNavigation,
+
+    /// Whether the phone is told where the car is from the car's own GPS,
+    /// rather than using its own. Off unless the driver turns it on, since a
+    /// phone's receiver is usually the better one.
+    @Default(false) bool useCarGps,
   }) = _AndroidAutoState;
 
   /// Whether Android Auto is running, whatever it is doing.

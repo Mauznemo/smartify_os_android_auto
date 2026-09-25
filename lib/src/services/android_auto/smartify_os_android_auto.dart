@@ -83,6 +83,11 @@ class SmartifyOsAndroidAuto {
   static Future<void> setShowNavigation(bool on) =>
       _service.setShowNavigation(on);
 
+  /// Whether the phone is told where the car is from the car's own GPS
+  /// (`SmartifyOsGps`) instead of using its own. Remembered between drives,
+  /// and takes effect the next time SmartifyOS starts.
+  static Future<void> setUseCarGps(bool on) => _service.setUseCarGps(on);
+
   /// Forgets every phone that starts Android Auto over Bluetooth. They are
   /// learned again the next time they connect without a cable.
   static Future<void> forgetWirelessPhones() => _service.forgetWirelessPhones();

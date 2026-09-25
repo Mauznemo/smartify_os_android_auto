@@ -183,6 +183,18 @@ class Translations$settings$en {
 	/// en: 'Wi-Fi hotspot'
 	String get hotspot_name => 'Wi-Fi hotspot';
 
+	/// en: 'Use the car's GPS'
+	String get use_car_gps => 'Use the car\'s GPS';
+
+	/// en: 'Maps on the phone uses the car's position instead of its own. The phone's is usually more accurate'
+	String get use_car_gps_hint => 'Maps on the phone uses the car\'s position instead of its own. The phone\'s is usually more accurate';
+
+	/// en: 'This car's GPS does not know where it is'
+	String get use_car_gps_unavailable => 'This car\'s GPS does not know where it is';
+
+	/// en: 'Takes effect the next time SmartifyOS starts'
+	String get use_car_gps_restart => 'Takes effect the next time SmartifyOS starts';
+
 	/// en: 'Phones'
 	String get phones => 'Phones';
 
@@ -265,6 +277,10 @@ extension on Translations {
 			'settings.wireless_hint_hotspot' => 'Starts a Wi-Fi hotspot for the phone. The car\'s own Wi-Fi is off while it is up',
 			'settings.wireless_hint_existing' => 'The phone joins the Wi-Fi network the car is on',
 			'settings.hotspot_name' => 'Wi-Fi hotspot',
+			'settings.use_car_gps' => 'Use the car\'s GPS',
+			'settings.use_car_gps_hint' => 'Maps on the phone uses the car\'s position instead of its own. The phone\'s is usually more accurate',
+			'settings.use_car_gps_unavailable' => 'This car\'s GPS does not know where it is',
+			'settings.use_car_gps_restart' => 'Takes effect the next time SmartifyOS starts',
 			'settings.phones' => 'Phones',
 			'settings.wireless_phones' => 'Start it over Bluetooth',
 			'settings.wireless_phones_none' => 'None yet',

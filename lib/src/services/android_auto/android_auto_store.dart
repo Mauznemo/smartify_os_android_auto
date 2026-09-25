@@ -21,6 +21,7 @@ class AndroidAutoStore {
   static const _phonesKey = 'smartify_os.android_auto.wireless_phones';
   static const _playerKey = 'smartify_os.android_auto.show_player';
   static const _navigationKey = 'smartify_os.android_auto.show_navigation';
+  static const _carGpsKey = 'smartify_os.android_auto.use_car_gps';
   static const _viewWidthKey = 'smartify_os.android_auto.view_width';
   static const _viewHeightKey = 'smartify_os.android_auto.view_height';
 
@@ -49,6 +50,7 @@ class AndroidAutoStore {
         wirelessPhones: {...?prefs.getStringList(_phonesKey)},
         showPlayer: prefs.getBool(_playerKey) ?? true,
         showNavigation: prefs.getBool(_navigationKey) ?? true,
+        useCarGps: prefs.getBool(_carGpsKey) ?? false,
       );
     } on Object catch (error) {
       SmartifyOsLog.warning(_tag, 'Could not read the saved settings', error);
@@ -70,6 +72,9 @@ class AndroidAutoStore {
 
   Future<void> saveShowNavigation(bool on) =>
       _write((prefs) => prefs.setBool(_navigationKey, on));
+
+  Future<void> saveUseCarGps(bool on) =>
+      _write((prefs) => prefs.setBool(_carGpsKey, on));
 
   Future<void> saveViewSize(Size size) => _write((prefs) async {
     await prefs.setDouble(_viewWidthKey, size.width);
@@ -112,6 +117,7 @@ class AndroidAutoSaved {
   final Set<String> wirelessPhones;
   final bool showPlayer;
   final bool showNavigation;
+  final bool useCarGps;
 
   /// The size the window's view last measured, in physical pixels, or `null`
   /// before it was ever opened.
@@ -125,6 +131,7 @@ class AndroidAutoSaved {
     this.wirelessPhones = const {},
     this.showPlayer = true,
     this.showNavigation = true,
+    this.useCarGps = false,
     this.viewSize,
   });
 }

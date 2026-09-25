@@ -10,6 +10,7 @@ import 'package:smartify_os_android_auto/src/widgets/home_widgets/android_auto_n
 import 'package:smartify_os_android_auto/src/widgets/home_widgets/android_auto_player_home_widget.dart';
 import 'package:smartify_os_core/app_list.dart';
 import 'package:smartify_os_core/bluetooth.dart';
+import 'package:smartify_os_core/gps.dart';
 import 'package:smartify_os_core/home_widgets.dart';
 import 'package:smartify_os_core/settings.dart';
 
@@ -121,6 +122,10 @@ SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
             address,
     ];
     final phones = t.settings.phones;
+    final capabilities =
+        settings.ref.watch(gpsCapabilitiesProvider).value ??
+        SmartifyOsGps.capabilities;
+    final carKnowsPosition = capabilities.has(GpsCapability.position);
 
     return [
       SettingsEntry.info(
@@ -160,6 +165,18 @@ SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
           title: t.settings.hotspot_name,
           value: state.hotspotName!,
         ),
+      SettingsEntry.toggle(
+        title: t.settings.use_car_gps,
+        subtitle: state.useCarGps != service.offersCarGps
+            ? t.settings.use_car_gps_restart
+            : carKnowsPosition
+            ? t.settings.use_car_gps_hint
+            : t.settings.use_car_gps_unavailable,
+        initialValue: state.useCarGps,
+        // Still switchable off when the car has lost its position since.
+        enabled: carKnowsPosition || state.useCarGps,
+        onChanged: (on) => unawaited(service.setUseCarGps(on)),
+      ),
       SettingsEntry.toggle(
         title: t.settings.show_navigation,
         subtitle: t.settings.show_navigation_hint,

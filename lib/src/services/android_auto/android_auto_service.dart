@@ -18,8 +18,10 @@ import 'package:smartify_os_android_auto/src/windows/android_auto_window.dart';
 import 'package:smartify_os_core/bluetooth.dart';
 import 'package:smartify_os_core/core.dart';
 import 'package:smartify_os_core/date_time.dart';
+import 'package:smartify_os_core/gps.dart';
 import 'package:smartify_os_core/media.dart';
 import 'package:smartify_os_core/modals.dart';
+import 'package:smartify_os_core/night_mode.dart';
 import 'package:smartify_os_core/notifications.dart';
 import 'package:smartify_os_core/settings.dart';
 import 'package:smartify_os_core/utils.dart';
@@ -89,6 +91,7 @@ class AndroidAutoService {
   String _passphrase = '';
   bool _askedAboutAutostart = false;
   Size? _viewSize;
+  bool _offersCarGps = false;
 
   AndroidAutoController? _controller;
   AndroidAutoConnectionState _headUnit = AndroidAutoConnectionState.idle;
@@ -155,6 +158,13 @@ class AndroidAutoService {
   /// Whether Android Auto works on this machine at all.
   bool get isSupported => _controller != null;
 
+  /// Whether the phone is being given the car's position in this run.
+  ///
+  /// The head unit tells the phone which sensors the car has once, when it is
+  /// made at boot, so switching [AndroidAutoState.useCarGps] only takes
+  /// effect the next time SmartifyOS starts. Until then the two differ.
+  bool get offersCarGps => _offersCarGps;
+
   /// Makes the head unit and starts watching for phones. Returns `false`
   /// where Android Auto cannot run, which leaves the extension adding
   /// nothing.
@@ -177,6 +187,7 @@ class AndroidAutoService {
     _passphrase = saved.hotspotPassphrase;
     _askedAboutAutostart = saved.askedAboutAutostart;
     _viewSize = saved.viewSize;
+    _offersCarGps = saved.useCarGps;
     final wirelessAvailable = _network is! AndroidAutoNoNetwork;
 
     try {
@@ -193,6 +204,13 @@ class AndroidAutoService {
           transports: {
             AndroidAutoTransport.usb,
             if (wirelessAvailable) AndroidAutoTransport.wireless,
+          },
+          sensors: {
+            AndroidAutoSensor.nightMode,
+            AndroidAutoSensor.drivingStatus,
+            // Only when the driver asked for it: the phone stops using its own
+            // position the moment the car offers one.
+            if (_offersCarGps) AndroidAutoSensor.location,
           },
         ),
       );
@@ -217,6 +235,7 @@ class AndroidAutoService {
       wirelessPhones: saved.wirelessPhones,
       showPlayer: saved.showPlayer,
       showNavigation: saved.showNavigation,
+      useCarGps: saved.useCarGps,
     );
 
     // Both for as long as the car runs, like the head unit itself.
@@ -226,6 +245,10 @@ class AndroidAutoService {
     _controller!.addListener(_onControllerChanged);
     _controller!.mediaPlayback.listen(_onMedia);
     _controller!.navigation.listen(_onNavigation);
+    // What the car knows, handed on as it changes. The head unit keeps the
+    // latest of each and gives it to every phone that connects.
+    SmartifyOsNightMode.nightModeChanges.listen(_controller!.setNightMode);
+    if (_offersCarGps) SmartifyOsGps.fixes.listen(_onGpsFix);
     _bluetoothConnected = {
       for (final device in Bluetooth.devices)
         if (device.connected) device.address,
@@ -726,6 +749,20 @@ class AndroidAutoService {
     _publishPhoneState();
   }
 
+  void _onGpsFix(GpsFix? fix) {
+    if (fix == null || !fix.hasPosition) return;
+    _controller?.setLocation(
+      AndroidAutoLocation(
+        latitude: fix.latitude!,
+        longitude: fix.longitude!,
+        accuracyMetres: fix.accuracy,
+        altitudeMetres: fix.altitude,
+        speedMps: fix.speed,
+        bearingDegrees: fix.heading,
+      ),
+    );
+  }
+
   void _onNavigation(AndroidAutoNavigation navigation) {
     _navigation.forceSet(
       _phoneConnected && navigation.isGuiding ? navigation : null,
@@ -812,6 +849,14 @@ class AndroidAutoService {
     if (on == state.showNavigation) return;
     _state.value = state.copyWith(showNavigation: on);
     await _store.saveShowNavigation(on);
+  }
+
+  /// Whether the phone is told where the car is from the car's own GPS.
+  /// Takes effect the next time SmartifyOS starts, see [offersCarGps].
+  Future<void> setUseCarGps(bool on) async {
+    if (on == state.useCarGps) return;
+    _state.value = state.copyWith(useCarGps: on);
+    await _store.saveUseCarGps(on);
   }
 
   /// Forgets every phone that starts Android Auto over Bluetooth.
