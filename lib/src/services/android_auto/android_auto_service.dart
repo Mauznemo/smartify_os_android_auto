@@ -247,8 +247,11 @@ class AndroidAutoService {
     _controller!.navigation.listen(_onNavigation);
     // What the car knows, handed on as it changes. The head unit keeps the
     // latest of each and gives it to every phone that connects.
-    SmartifyOsNightMode.nightModeChanges.listen(_controller!.setNightMode);
-    if (_offersCarGps) SmartifyOsGps.fixes.listen(_onGpsFix);
+    SmartifyOsNightMode.nightModeChanges.listen(_onNightMode);
+    if (_offersCarGps) {
+      SmartifyOsLog.info(_tag, "Giving the phone the car's GPS position");
+      SmartifyOsGps.fixes.listen(_onGpsFix);
+    }
     _bluetoothConnected = {
       for (final device in Bluetooth.devices)
         if (device.connected) device.address,
@@ -747,6 +750,14 @@ class AndroidAutoService {
       _artwork = MemoryImage(art);
     }
     _publishPhoneState();
+  }
+
+  void _onNightMode(bool night) {
+    SmartifyOsLog.info(
+      _tag,
+      'Telling the phone it is ${night ? 'night' : 'day'}',
+    );
+    _controller?.setNightMode(night);
   }
 
   void _onGpsFix(GpsFix? fix) {
