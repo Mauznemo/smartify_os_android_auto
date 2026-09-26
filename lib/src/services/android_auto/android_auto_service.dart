@@ -77,6 +77,11 @@ class AndroidAutoService {
 
   static const _usbPollInterval = Duration(seconds: 2);
 
+  /// How often the phone is given the car's position. It expects a reading
+  /// about this often, as a receiver would give it, and goes back to its own
+  /// GPS within seconds when they stop.
+  static const _positionInterval = Duration(seconds: 1);
+
   /// The one instance used by the whole app.
   static final AndroidAutoService instance = AndroidAutoService._();
   AndroidAutoService._();
@@ -92,6 +97,12 @@ class AndroidAutoService {
   bool _askedAboutAutostart = false;
   Size? _viewSize;
   bool _offersCarGps = false;
+  // The car's position as last handed to the phone, so one that stops
+  // changing (a fake one, or a source that only reports now and then) is
+  // repeated rather than left to go stale, and whether a reading came in
+  // since the last repeat, in which case it needs none.
+  AndroidAutoLocation? _position;
+  bool _positionFresh = false;
 
   AndroidAutoController? _controller;
   AndroidAutoConnectionState _headUnit = AndroidAutoConnectionState.idle;
@@ -251,6 +262,7 @@ class AndroidAutoService {
     if (_offersCarGps) {
       SmartifyOsLog.info(_tag, "Giving the phone the car's GPS position");
       SmartifyOsGps.fixes.listen(_onGpsFix);
+      Timer.periodic(_positionInterval, (_) => _repeatPosition());
     }
     _bluetoothConnected = {
       for (final device in Bluetooth.devices)
@@ -760,18 +772,32 @@ class AndroidAutoService {
     _controller?.setNightMode(night);
   }
 
+  /// A fix that no longer says where the car is stops the repeating, so the
+  /// phone goes back to its own GPS rather than being told an old position.
   void _onGpsFix(GpsFix? fix) {
-    if (fix == null || !fix.hasPosition) return;
-    _controller?.setLocation(
-      AndroidAutoLocation(
-        latitude: fix.latitude!,
-        longitude: fix.longitude!,
-        accuracyMetres: fix.accuracy,
-        altitudeMetres: fix.altitude,
-        speedMps: fix.speed,
-        bearingDegrees: fix.heading,
-      ),
+    if (fix == null || !fix.hasPosition) {
+      _position = null;
+      return;
+    }
+    _position = AndroidAutoLocation(
+      latitude: fix.latitude!,
+      longitude: fix.longitude!,
+      accuracyMetres: fix.accuracy,
+      altitudeMetres: fix.altitude,
+      speedMps: fix.speed,
+      bearingDegrees: fix.heading,
     );
+    _positionFresh = true;
+    _controller?.setLocation(_position!);
+  }
+
+  void _repeatPosition() {
+    if (_positionFresh) {
+      _positionFresh = false;
+      return;
+    }
+    final position = _position;
+    if (position != null) _controller?.setLocation(position);
   }
 
   void _onNavigation(AndroidAutoNavigation navigation) {
