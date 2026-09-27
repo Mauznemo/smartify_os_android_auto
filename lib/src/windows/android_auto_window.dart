@@ -9,11 +9,15 @@ import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_
 import 'package:smartify_os_android_auto/src/services/android_auto/models/android_auto_state.dart';
 import 'package:smartify_os_android_auto/src/utils/android_auto_status_text.dart';
 import 'package:smartify_os_android_auto/src/widgets/android_auto_icon.dart';
+import 'package:smartify_os_core/status_bar.dart';
 import 'package:smartify_os_core/theme.dart';
 import 'package:smartify_os_core/widgets.dart';
 
-/// The phone's Android Auto screen, full screen, with the info display out of
-/// the way.
+/// Android Auto, full screen, with the info display out of the way.
+///
+/// It has no title bar, so Android Auto gets all the height under the status
+/// bar, and the status bar leaves out its clock, since Android Auto shows one
+/// of its own. The home button in the status bar closes it.
 ///
 /// Opening it starts Android Auto if it is not running yet. Closing it does
 /// **not** stop it: the phone keeps playing and navigating, and the
@@ -69,8 +73,8 @@ class _AndroidAutoWindowState extends ConsumerState<AndroidAutoWindow> {
     final state = ref.watch(androidAutoStateProvider).value ?? _service.state;
     final controller = _service.controller;
 
-    return SmartifyOsWindow(
-      title: t.android_auto.title,
+    return SmartifyOsWindow.withoutTitleBar(
+      hiddenStatusIcons: const {StatusIcons.clock},
       child: controller == null
           ? const SizedBox.shrink()
           // The view shows the placeholder whenever the phone's picture is not
