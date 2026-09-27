@@ -1,0 +1,13 @@
+# Lets SmartifyOS open an Android phone plugged in over USB without being root.
+# Installed by the smartify-os CLI, see `smartify_os` in pubspec.yaml.
+#
+# Numbered below 73 so TAG+="uaccess" is seen by systemd's 73-seat-late.rules,
+# which is what hands the device to whoever is logged in on the screen. The
+# plugdev group covers a car where SmartifyOS runs without a seat.
+
+# Google, and the ids a phone switches to in Android Open Accessory mode
+SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+# Samsung, Xiaomi and OnePlus, before the phone switches to accessory mode
+SUBSYSTEM=="usb", ATTR{idVendor}=="04e8", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2717", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2a70", MODE="0660", GROUP="plugdev", TAG+="uaccess"

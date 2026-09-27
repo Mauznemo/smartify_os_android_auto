@@ -3,6 +3,8 @@
 ### Added
 
 - home screen cards for what the phone plays and the next turn
+- the Linux packages and udev rule it needs are listed in `pubspec.yaml`, for the
+  `smartify-os` CLI to install
 
 ### Fixed
 

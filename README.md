@@ -70,10 +70,12 @@ phone connected at the time shows a new one the next time it connects.
 
 ## What the car needs
 
-Everything the `android_auto` plugin lists for Linux (its build dependencies, and the udev
-rule that lets a normal user open a phone), plus NetworkManager (`nmcli`) and `iw` for the
-hotspot, and passwordless `sudo` for bringing it up. The SmartifyOS install script sets all
-of that up.
+On Linux, the packages the `android_auto` plugin is built against, a video decoding driver,
+BlueZ, NetworkManager (`nmcli`) and `iw` for the hotspot, and a udev rule
+([`system/udev/70-android-auto.rules`](system/udev/70-android-auto.rules)) that lets
+SmartifyOS open a phone without being root. They are all listed under `smartify_os` in
+[`pubspec.yaml`](pubspec.yaml), and the `smartify-os` CLI installs them, so there is
+nothing to set up by hand.
 
 It runs the real head unit on Linux, and the plugin's pretend phone on macOS and Windows,
 so the whole flow can be tried while developing. It adds nothing on Android yet, since the

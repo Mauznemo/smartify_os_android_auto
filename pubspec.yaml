@@ -41,3 +41,44 @@ dev_dependencies:
   fake_async: ^1.3.3
   build_runner: ^2.11.1
   freezed: ^3.2.3
+
+# What the car needs installed on Linux, read by the smartify-os CLI (the format
+# is in EXTENSIONS.md in the SmartifyOS repository). Libraries the plugin links
+# against are not under `run`: the CLI reads those off the finished build.
+smartify_os:
+  linux:
+    build:
+      apt:
+        # What the android_auto plugin builds aasdk and its decoder against,
+        # from its README.
+        - libboost-all-dev
+        - libusb-1.0-0-dev
+        - libssl-dev
+        - libprotobuf-dev
+        - protobuf-compiler
+        - libavcodec-dev
+        - libavutil-dev
+        - libswscale-dev
+        - libva-dev
+        - libpulse-dev
+        - libegl1-mesa-dev
+        - libgles2-mesa-dev
+    run:
+      apt:
+        # Hardware video decoding. Loaded while it runs, so the build cannot see
+        # it; without a driver the picture is decoded in software instead.
+        - libva-drm2
+        - mesa-va-drivers
+        - package: intel-media-va-driver
+          arch: [x64]
+        # Wireless Android Auto: the phone finds the car over Bluetooth, then
+        # joins a hotspot brought up with nmcli after asking iw what the Wi-Fi
+        # can do.
+        - bluez
+        - network-manager
+        - iw
+      # Lets SmartifyOS open a phone plugged in over USB without being root.
+      udev:
+        - system/udev/70-android-auto.rules
+      groups:
+        - plugdev
