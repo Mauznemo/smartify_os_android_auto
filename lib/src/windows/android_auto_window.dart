@@ -13,7 +13,7 @@ import 'package:smartify_os_core/status_bar.dart';
 import 'package:smartify_os_core/theme.dart';
 import 'package:smartify_os_core/widgets.dart';
 
-/// Android Auto, full screen, with the info display out of the way.
+/// Android Auto, full screen, with the bottom bar out of the way.
 ///
 /// It has no title bar, so Android Auto gets all the height under the status
 /// bar, and the status bar leaves out its clock, since Android Auto shows one
