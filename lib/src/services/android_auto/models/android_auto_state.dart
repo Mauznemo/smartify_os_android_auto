@@ -93,6 +93,11 @@ abstract class AndroidAutoState with _$AndroidAutoState {
     /// rather than using its own. Off unless the driver turns it on, since a
     /// phone's receiver is usually the better one.
     @Default(false) bool useCarGps,
+
+    /// How big Android Auto draws its text and buttons, as a percentage of
+    /// the size SmartifyOS draws its own at: 100 is the same size, whatever
+    /// the screen's resolution.
+    @Default(100) int sizePercent,
   }) = _AndroidAutoState;
 
   /// Whether Android Auto is running, whatever it is doing.

@@ -22,10 +22,7 @@ dependencies:
   # actually runs, see EXTENSIONS.md in the SmartifyOS repository.
   smartify_os_core: ">=0.0.1"
 
-  # 0.1.6: measures the view right inside SmartifyOS's scaled canvas (0.1.4),
-  # says when the phone's picture is live (hasVideo, 0.1.5), and asks for a
-  # big enough frame when started before any view is laid out.
-  android_auto: ^0.1.6
+  android_auto: ^0.1.7
 
   # Packages SmartifyOS uses itself: the car's SmartifyOS picks the version.
   flutter_riverpod: any

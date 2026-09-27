@@ -44,7 +44,7 @@
     "use_car_gps": "Use the car's GPS",
     "use_car_gps_hint": "Maps on the phone uses the car's position instead of its own. The phone's is usually more accurate",
     "use_car_gps_unavailable": "This car's GPS does not know where it is",
-    "use_car_gps_restart": "Takes effect the next time SmartifyOS starts",
+    "reconnect_to_apply": "Your phone picks this up the next time it connects",
     "phones": "Phones",
     "wireless_phones": "Start it over Bluetooth",
     "wireless_phones_none": "None yet",
@@ -56,6 +56,17 @@
     "show_player": "Show what is playing",
     "show_player_hint": "Instead of the Bluetooth player, while a phone is connected",
     "show_navigation": "Show directions",
-    "show_navigation_hint": "The next turn, while the phone is guiding you somewhere"
+    "show_navigation_hint": "The next turn, while the phone is guiding you somewhere",
+    "screen": "Screen",
+    "size": "Size of text and buttons",
+    "size_hint": "In Android Auto, compared to the rest of SmartifyOS",
+    "size_same": "Same as SmartifyOS",
+    "size_smaller": "Smaller",
+    "size_larger": "Larger",
+    "size_much_smaller": "Much smaller",
+    "size_much_larger": "Much larger",
+    "size_slightly_smaller": "Slightly smaller",
+    "size_slightly_larger": "Slightly larger",
+    "size_percent": "$percent%"
   }
 }

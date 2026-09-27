@@ -24,8 +24,8 @@ import 'package:smartify_os_core/settings.dart';
 ///   the window leaves it running in the background.
 /// * A notification while it runs, with its icon at the end of the status
 ///   bar and a button to stop it.
-/// * A page in Settings under Connectivity, with a switch to have it start
-///   on its own.
+/// * A page of its own in Settings, with a switch to have it start on its
+///   own and how big its text and buttons are.
 /// * Two cards on the home screen while a phone is connected: what it is
 ///   playing (in place of the Bluetooth player, with the cover), and the next
 ///   turn while it guides. Each can be switched off in Settings.

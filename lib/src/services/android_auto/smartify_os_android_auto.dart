@@ -84,9 +84,18 @@ class SmartifyOsAndroidAuto {
       _service.setShowNavigation(on);
 
   /// Whether the phone is told where the car is from the car's own GPS
-  /// (`SmartifyOsGps`) instead of using its own. Remembered between drives,
-  /// and takes effect the next time SmartifyOS starts.
+  /// (`SmartifyOsGps`) instead of using its own. Remembered between drives.
+  /// Switched on, a phone connected now starts using it the next time it
+  /// connects; switched off, it goes back to its own within seconds.
   static Future<void> setUseCarGps(bool on) => _service.setUseCarGps(on);
+
+  /// How big Android Auto draws its text and buttons, as a percentage of the
+  /// size SmartifyOS draws its own at. 100, the default, is the same size, on
+  /// any screen. Settings offers a few between 70 and 140, but any number
+  /// works. Remembered between drives. A phone takes its size when it
+  /// connects, so one connected now shows a new size the next time it does.
+  static Future<void> setSizePercent(int percent) =>
+      _service.setSizePercent(percent);
 
   /// Forgets every phone that starts Android Auto over Bluetooth. They are
   /// learned again the next time they connect without a cable.

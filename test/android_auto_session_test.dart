@@ -32,7 +32,7 @@ void main() {
       // The window measured its view on an earlier drive. Starting with it
       // closed, the phone has to be told that size before it connects, or it
       // lays out 16:9 and then again once the window opens.
-      service.rememberViewSize(const Size(1016, 506));
+      service.rememberView(const Size(1016, 506), 0.94);
       service.startSession();
       // Past the moment a cable-only start holds its errors for.
       async.elapse(const Duration(milliseconds: 300));

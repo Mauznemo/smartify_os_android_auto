@@ -58,14 +58,15 @@ class _AndroidAutoWindowState extends ConsumerState<AndroidAutoWindow> {
   /// Measures the view exactly the way it measures itself (the same
   /// constraints, the same pixel ratio), so the size handed to the phone on a
   /// start with the window closed is the one the view reports once it opens,
-  /// and the phone has nothing to lay out again for.
-  void _rememberViewSize(BuildContext context, BoxConstraints constraints) {
+  /// and the phone has nothing to lay out again for. The pixel ratio is also
+  /// what Android Auto's size follows SmartifyOS's by.
+  void _rememberView(BuildContext context, BoxConstraints constraints) {
     final size = constraints.biggest;
     if (!size.isFinite || size.isEmpty) return;
     final ratio =
         MediaQuery.maybeDevicePixelRatioOf(context) ??
         View.of(context).devicePixelRatio;
-    _service.rememberViewSize(size * ratio);
+    _service.rememberView(size * ratio, ratio);
   }
 
   @override
@@ -82,7 +83,7 @@ class _AndroidAutoWindowState extends ConsumerState<AndroidAutoWindow> {
           // after a stop, and while a lost phone is being waited for.
           : LayoutBuilder(
               builder: (context, constraints) {
-                _rememberViewSize(context, constraints);
+                _rememberView(context, constraints);
                 return AndroidAutoView(
                   controller: controller,
                   placeholder: _Placeholder(state: state),

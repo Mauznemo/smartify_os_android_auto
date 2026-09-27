@@ -32,7 +32,7 @@ class AndroidAutoIds {
   /// The entry in the app list.
   static const String appListEntry = 'android_auto';
 
-  /// The page in Settings, under Connectivity.
+  /// The page in Settings, on the first page next to Connectivity.
   static const String settingsPage = 'android_auto';
 
   /// The ongoing notification shown while Android Auto runs, which also puts
@@ -98,13 +98,40 @@ AppListEntry androidAutoAppListEntry() => AppListEntry(
   onOpen: AndroidAutoService.instance.openWindow,
 );
 
-/// Internal: the Android Auto page in Settings.
+/// Internal: the sizes offered in Settings, as a percentage of SmartifyOS's
+/// own, with what the driver reads for each.
+List<SettingsChoice<int>> _sizeChoices(int selected) {
+  final settings = t.settings;
+  final labels = {
+    70: settings.size_much_smaller,
+    80: settings.size_smaller,
+    90: settings.size_slightly_smaller,
+    100: settings.size_same,
+    110: settings.size_slightly_larger,
+    125: settings.size_larger,
+    140: settings.size_much_larger,
+  };
+  return [
+    for (final MapEntry(key: percent, value: label) in labels.entries)
+      SettingsChoice(
+        percent,
+        label,
+        subtitle: settings.size_percent(percent: percent),
+      ),
+    // One the app set that is none of the above still shows what it is.
+    if (!labels.containsKey(selected))
+      SettingsChoice(selected, settings.size_percent(percent: selected)),
+  ];
+}
+
+/// Internal: the Android Auto page in Settings. A category of its own rather
+/// than a page under Connectivity, since most of it is about the screen, the
+/// home screen and the car rather than how the phone connects.
 SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
   id: AndroidAutoIds.settingsPage,
-  parent: SettingsPages.connectivity,
   title: t.android_auto.title,
   icon: const AndroidAutoIcon(),
-  // Right after Bluetooth, which it builds on.
+  // Right after Connectivity, with Bluetooth in it, which it builds on.
   order: 15,
   entries: (settings) {
     final service = AndroidAutoService.instance;
@@ -167,8 +194,8 @@ SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
         ),
       SettingsEntry.toggle(
         title: t.settings.use_car_gps,
-        subtitle: state.useCarGps != service.offersCarGps
-            ? t.settings.use_car_gps_restart
+        subtitle: service.carGpsWaitsForReconnect
+            ? t.settings.reconnect_to_apply
             : carKnowsPosition
             ? t.settings.use_car_gps_hint
             : t.settings.use_car_gps_unavailable,
@@ -176,6 +203,16 @@ SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
         // Still switchable off when the car has lost its position since.
         enabled: carKnowsPosition || state.useCarGps,
         onChanged: (on) => unawaited(service.setUseCarGps(on)),
+      ),
+      SettingsEntry.choice<int>(
+        title: t.settings.size,
+        subtitle: service.sizeWaitsForReconnect
+            ? t.settings.reconnect_to_apply
+            : t.settings.size_hint,
+        options: _sizeChoices(state.sizePercent),
+        selected: state.sizePercent,
+        section: t.settings.screen,
+        onSelected: (percent) => unawaited(service.setSizePercent(percent)),
       ),
       SettingsEntry.toggle(
         title: t.settings.show_navigation,

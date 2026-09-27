@@ -62,10 +62,14 @@ void main() {
   test('the driver\'s choices are remembered', () async {
     await service.setAutostart(true);
     await service.setWireless(false);
+    await service.setSizePercent(125);
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('smartify_os.android_auto.autostart'), isTrue);
     expect(prefs.getBool('smartify_os.android_auto.wireless'), isFalse);
+    expect(prefs.getInt('smartify_os.android_auto.size_percent'), 125);
     expect(service.state.usesWireless, isFalse);
+    // No phone is connected, so there is nothing to wait for.
+    expect(service.sizeWaitsForReconnect, isFalse);
   });
 }

@@ -192,8 +192,8 @@ class Translations$settings$en {
 	/// en: 'This car's GPS does not know where it is'
 	String get use_car_gps_unavailable => 'This car\'s GPS does not know where it is';
 
-	/// en: 'Takes effect the next time SmartifyOS starts'
-	String get use_car_gps_restart => 'Takes effect the next time SmartifyOS starts';
+	/// en: 'Your phone picks this up the next time it connects'
+	String get reconnect_to_apply => 'Your phone picks this up the next time it connects';
 
 	/// en: 'Phones'
 	String get phones => 'Phones';
@@ -230,6 +230,39 @@ class Translations$settings$en {
 
 	/// en: 'The next turn, while the phone is guiding you somewhere'
 	String get show_navigation_hint => 'The next turn, while the phone is guiding you somewhere';
+
+	/// en: 'Screen'
+	String get screen => 'Screen';
+
+	/// en: 'Size of text and buttons'
+	String get size => 'Size of text and buttons';
+
+	/// en: 'In Android Auto, compared to the rest of SmartifyOS'
+	String get size_hint => 'In Android Auto, compared to the rest of SmartifyOS';
+
+	/// en: 'Same as SmartifyOS'
+	String get size_same => 'Same as SmartifyOS';
+
+	/// en: 'Smaller'
+	String get size_smaller => 'Smaller';
+
+	/// en: 'Larger'
+	String get size_larger => 'Larger';
+
+	/// en: 'Much smaller'
+	String get size_much_smaller => 'Much smaller';
+
+	/// en: 'Much larger'
+	String get size_much_larger => 'Much larger';
+
+	/// en: 'Slightly smaller'
+	String get size_slightly_smaller => 'Slightly smaller';
+
+	/// en: 'Slightly larger'
+	String get size_slightly_larger => 'Slightly larger';
+
+	/// en: '$percent%'
+	String size_percent({required Object percent}) => '${percent}%';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -280,7 +313,7 @@ extension on Translations {
 			'settings.use_car_gps' => 'Use the car\'s GPS',
 			'settings.use_car_gps_hint' => 'Maps on the phone uses the car\'s position instead of its own. The phone\'s is usually more accurate',
 			'settings.use_car_gps_unavailable' => 'This car\'s GPS does not know where it is',
-			'settings.use_car_gps_restart' => 'Takes effect the next time SmartifyOS starts',
+			'settings.reconnect_to_apply' => 'Your phone picks this up the next time it connects',
 			'settings.phones' => 'Phones',
 			'settings.wireless_phones' => 'Start it over Bluetooth',
 			'settings.wireless_phones_none' => 'None yet',
@@ -293,6 +326,17 @@ extension on Translations {
 			'settings.show_player_hint' => 'Instead of the Bluetooth player, while a phone is connected',
 			'settings.show_navigation' => 'Show directions',
 			'settings.show_navigation_hint' => 'The next turn, while the phone is guiding you somewhere',
+			'settings.screen' => 'Screen',
+			'settings.size' => 'Size of text and buttons',
+			'settings.size_hint' => 'In Android Auto, compared to the rest of SmartifyOS',
+			'settings.size_same' => 'Same as SmartifyOS',
+			'settings.size_smaller' => 'Smaller',
+			'settings.size_larger' => 'Larger',
+			'settings.size_much_smaller' => 'Much smaller',
+			'settings.size_much_larger' => 'Much larger',
+			'settings.size_slightly_smaller' => 'Slightly smaller',
+			'settings.size_slightly_larger' => 'Slightly larger',
+			'settings.size_percent' => ({required Object percent}) => '${percent}%',
 			_ => null,
 		};
 	}

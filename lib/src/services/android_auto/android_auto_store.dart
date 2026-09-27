@@ -24,6 +24,8 @@ class AndroidAutoStore {
   static const _carGpsKey = 'smartify_os.android_auto.use_car_gps';
   static const _viewWidthKey = 'smartify_os.android_auto.view_width';
   static const _viewHeightKey = 'smartify_os.android_auto.view_height';
+  static const _viewRatioKey = 'smartify_os.android_auto.view_pixel_ratio';
+  static const _sizeKey = 'smartify_os.android_auto.size_percent';
 
   const AndroidAutoStore();
 
@@ -43,6 +45,8 @@ class AndroidAutoStore {
         viewSize: viewWidth == null || viewHeight == null
             ? null
             : Size(viewWidth, viewHeight),
+        viewPixelRatio: prefs.getDouble(_viewRatioKey),
+        sizePercent: prefs.getInt(_sizeKey) ?? 100,
         autostart: prefs.getBool(_autostartKey) ?? false,
         wireless: prefs.getBool(_wirelessKey) ?? true,
         askedAboutAutostart: prefs.getBool(_askedKey) ?? false,
@@ -76,9 +80,13 @@ class AndroidAutoStore {
   Future<void> saveUseCarGps(bool on) =>
       _write((prefs) => prefs.setBool(_carGpsKey, on));
 
-  Future<void> saveViewSize(Size size) => _write((prefs) async {
+  Future<void> saveSizePercent(int percent) =>
+      _write((prefs) => prefs.setInt(_sizeKey, percent));
+
+  Future<void> saveView(Size size, double pixelRatio) => _write((prefs) async {
     await prefs.setDouble(_viewWidthKey, size.width);
     await prefs.setDouble(_viewHeightKey, size.height);
+    await prefs.setDouble(_viewRatioKey, pixelRatio);
   });
 
   Future<void> saveWirelessPhones(Set<String> addresses) =>
@@ -118,10 +126,15 @@ class AndroidAutoSaved {
   final bool showPlayer;
   final bool showNavigation;
   final bool useCarGps;
+  final int sizePercent;
 
   /// The size the window's view last measured, in physical pixels, or `null`
   /// before it was ever opened.
   final Size? viewSize;
+
+  /// How many screen pixels one of SmartifyOS's pixels was worth where the
+  /// window's view was last laid out, or `null` before it was ever opened.
+  final double? viewPixelRatio;
 
   const AndroidAutoSaved({
     required this.hotspotPassphrase,
@@ -132,6 +145,8 @@ class AndroidAutoSaved {
     this.showPlayer = true,
     this.showNavigation = true,
     this.useCarGps = false,
+    this.sizePercent = 100,
     this.viewSize,
+    this.viewPixelRatio,
   });
 }

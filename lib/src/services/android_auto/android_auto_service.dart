@@ -12,6 +12,7 @@ import 'package:smartify_os_android_auto/src/services/android_auto/models/androi
 import 'package:smartify_os_android_auto/src/services/android_auto/models/android_auto_wireless_network.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/usb_phone_finder.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/wifi_hotspot.dart';
+import 'package:smartify_os_android_auto/src/utils/android_auto_dpi.dart';
 import 'package:smartify_os_android_auto/src/utils/android_auto_status_text.dart';
 import 'package:smartify_os_android_auto/src/widgets/android_auto_icon.dart';
 import 'package:smartify_os_android_auto/src/windows/android_auto_window.dart';
@@ -96,13 +97,19 @@ class AndroidAutoService {
   String _passphrase = '';
   bool _askedAboutAutostart = false;
   Size? _viewSize;
-  bool _offersCarGps = false;
+  double? _viewPixelRatio;
+  // What the phone connected now was given when it connected, or `null`
+  // while there is none. A change to either only reaches a phone the next
+  // time it connects.
+  int? _phoneDpi;
+  Set<AndroidAutoSensor>? _phoneSensors;
   // The car's position as last handed to the phone, so one that stops
   // changing (a fake one, or a source that only reports now and then) is
   // repeated rather than left to go stale, and whether a reading came in
   // since the last repeat, in which case it needs none.
   AndroidAutoLocation? _position;
   bool _positionFresh = false;
+  Timer? _positionTimer;
 
   AndroidAutoController? _controller;
   AndroidAutoConnectionState _headUnit = AndroidAutoConnectionState.idle;
@@ -169,12 +176,22 @@ class AndroidAutoService {
   /// Whether Android Auto works on this machine at all.
   bool get isSupported => _controller != null;
 
-  /// Whether the phone is being given the car's position in this run.
-  ///
-  /// The head unit tells the phone which sensors the car has once, when it is
-  /// made at boot, so switching [AndroidAutoState.useCarGps] only takes
-  /// effect the next time SmartifyOS starts. Until then the two differ.
-  bool get offersCarGps => _offersCarGps;
+  /// Whether the phone connected now still has the size it connected with,
+  /// rather than [AndroidAutoState.sizePercent]. A phone only takes its size
+  /// when it connects, so it shows a new one the next time it does.
+  bool get sizeWaitsForReconnect =>
+      _phoneDpi != null && _phoneDpi != _controller?.dpi;
+
+  /// Whether [AndroidAutoState.useCarGps] is on but the phone connected now
+  /// was not offered the car's position, since it connected before. It uses
+  /// it from the next time it connects. Switching it off needs no reconnect:
+  /// the phone goes back to its own GPS as soon as the car's stops coming.
+  bool get carGpsWaitsForReconnect {
+    final sensors = _phoneSensors;
+    return state.useCarGps &&
+        sensors != null &&
+        !sensors.contains(AndroidAutoSensor.location);
+  }
 
   /// Makes the head unit and starts watching for phones. Returns `false`
   /// where Android Auto cannot run, which leaves the extension adding
@@ -198,7 +215,7 @@ class AndroidAutoService {
     _passphrase = saved.hotspotPassphrase;
     _askedAboutAutostart = saved.askedAboutAutostart;
     _viewSize = saved.viewSize;
-    _offersCarGps = saved.useCarGps;
+    _viewPixelRatio = saved.viewPixelRatio;
     final wirelessAvailable = _network is! AndroidAutoNoNetwork;
 
     try {
@@ -207,6 +224,7 @@ class AndroidAutoService {
           headUnitName: config.headUnitName ?? about.deviceName,
           carModel: config.carModel ?? about.model ?? 'SmartifyOS',
           carYear: config.carYear ?? '${SmartifyOsTime.now.year}',
+          dpi: _dpi(saved.sizePercent),
           // Wireless is in here whether or not the driver has it switched
           // on, because this is what publishes the service on Bluetooth that
           // tells a phone being paired that this is a car it can project to
@@ -216,13 +234,7 @@ class AndroidAutoService {
             AndroidAutoTransport.usb,
             if (wirelessAvailable) AndroidAutoTransport.wireless,
           },
-          sensors: {
-            AndroidAutoSensor.nightMode,
-            AndroidAutoSensor.drivingStatus,
-            // Only when the driver asked for it: the phone stops using its own
-            // position the moment the car offers one.
-            if (_offersCarGps) AndroidAutoSensor.location,
-          },
+          sensors: _sensors(useCarGps: saved.useCarGps),
         ),
       );
     } catch (error, stackTrace) {
@@ -247,6 +259,7 @@ class AndroidAutoService {
       showPlayer: saved.showPlayer,
       showNavigation: saved.showNavigation,
       useCarGps: saved.useCarGps,
+      sizePercent: saved.sizePercent,
     );
 
     // Both for as long as the car runs, like the head unit itself.
@@ -259,11 +272,10 @@ class AndroidAutoService {
     // What the car knows, handed on as it changes. The head unit keeps the
     // latest of each and gives it to every phone that connects.
     SmartifyOsNightMode.nightModeChanges.listen(_onNightMode);
-    if (_offersCarGps) {
-      SmartifyOsLog.info(_tag, "Giving the phone the car's GPS position");
-      SmartifyOsGps.fixes.listen(_onGpsFix);
-      Timer.periodic(_positionInterval, (_) => _repeatPosition());
-    }
+    // Whether any of it reaches the phone is up to the driver's switch, see
+    // [_onGpsFix].
+    SmartifyOsGps.fixes.listen(_onGpsFix);
+    _repeatPositions(state.useCarGps);
     _bluetoothConnected = {
       for (final device in Bluetooth.devices)
         if (device.connected) device.address,
@@ -398,14 +410,77 @@ class AndroidAutoService {
   }
 
   /// Notes how big, in physical pixels, the window's view is, so a start with
-  /// the window closed can tell the phone. Called by the window whenever it is
-  /// laid out; the car's screen never changes, so this is almost always the
-  /// same number, and only a different one is saved.
-  void rememberViewSize(Size physicalSize) {
-    if (physicalSize == _viewSize) return;
+  /// the window closed can tell the phone, and how many screen pixels one of
+  /// SmartifyOS's pixels is worth there, for the density phones are told.
+  /// Called by the window whenever it is laid out; the car's screen never
+  /// changes, so this is almost always the same, and only a change is saved.
+  void rememberView(Size physicalSize, double pixelRatio) {
+    if (physicalSize == _viewSize && pixelRatio == _viewPixelRatio) return;
     _viewSize = physicalSize;
-    unawaited(_store.saveViewSize(physicalSize));
+    _viewPixelRatio = pixelRatio;
+    unawaited(_store.saveView(physicalSize, pixelRatio));
+    // Not in the middle of the window's layout: a new density notifies the
+    // controller's listeners, which rebuild.
+    scheduleMicrotask(_applyDpi);
   }
+
+  /// Hands the head unit the density for the driver's size, which a phone
+  /// takes the next time it connects.
+  void _applyDpi() {
+    final controller = _controller;
+    if (controller == null) return;
+    final dpi = _dpi(state.sizePercent);
+    if (dpi != controller.dpi) controller.setDpi(dpi);
+  }
+
+  /// The density the phone lays out at, so Android Auto's text and buttons
+  /// are [sizePercent] of the size of SmartifyOS's own, see [androidAutoDpi].
+  ///
+  /// Goes by what the window measured last, which at boot, before it has been
+  /// laid out in this run, is from an earlier one. Before it was ever opened,
+  /// the screen and the design width give the same number, since the canvas
+  /// covers the whole screen.
+  int _dpi(int sizePercent) {
+    var ratio = _viewPixelRatio;
+    var viewSize = _viewSize;
+    if (ratio == null) {
+      final screen = WidgetsBinding
+          .instance
+          .platformDispatcher
+          .views
+          .firstOrNull
+          ?.physicalSize;
+      final designWidth = SmartifyOs.instance.display.designWidth;
+      if (screen != null && !screen.isEmpty && designWidth > 0) {
+        ratio = screen.width / designWidth;
+        viewSize ??= screen;
+      }
+    }
+    // Nothing to go by at all: the 140 dpi android_auto picks itself, which
+    // the driver's size still applies to.
+    ratio ??= 140 / 160;
+    final dpi = androidAutoDpi(
+      pixelRatio: ratio,
+      sizePercent: sizePercent,
+      physicalViewSize: viewSize,
+    );
+    SmartifyOsLog.info(
+      _tag,
+      'Telling phones $dpi dpi '
+      '(${ratio.toStringAsFixed(3)} screen pixels per pixel, '
+      'size $sizePercent%)',
+    );
+    return dpi;
+  }
+
+  /// The sensors the car offers the phone. The car's position only when the
+  /// driver asked for it: the phone stops using its own the moment the car
+  /// offers one.
+  static Set<AndroidAutoSensor> _sensors({required bool useCarGps}) => {
+    AndroidAutoSensor.nightMode,
+    AndroidAutoSensor.drivingStatus,
+    if (useCarGps) AndroidAutoSensor.location,
+  };
 
   /// A phone connected over Bluetooth that should be offered Android Auto
   /// without a cable, or `null`.
@@ -548,6 +623,10 @@ class AndroidAutoService {
         _idleTimer?.cancel();
         _problem = null;
         if (previous != AndroidAutoConnectionState.connected) {
+          // What the phone was given while it connected, which it keeps for
+          // as long as it stays.
+          _phoneDpi = _controller?.dpi;
+          _phoneSensors = _controller?.sensors;
           unawaited(_onConnected());
           // In case the phone spoke up a moment before it counted as
           // connected.
@@ -774,8 +853,11 @@ class AndroidAutoService {
 
   /// A fix that no longer says where the car is stops the repeating, so the
   /// phone goes back to its own GPS rather than being told an old position.
+  ///
+  /// Only while the driver's switch is on. Off, readings stop, and a phone
+  /// that was offered the car's position goes back to its own within seconds.
   void _onGpsFix(GpsFix? fix) {
-    if (fix == null || !fix.hasPosition) {
+    if (!state.useCarGps || fix == null || !fix.hasPosition) {
       _position = null;
       return;
     }
@@ -789,6 +871,19 @@ class AndroidAutoService {
     );
     _positionFresh = true;
     _controller?.setLocation(_position!);
+  }
+
+  /// Starts or stops repeating the car's position, see [_repeatPosition].
+  void _repeatPositions(bool on) {
+    _positionTimer?.cancel();
+    _positionTimer = null;
+    _position = null;
+    if (on) {
+      _positionTimer = Timer.periodic(
+        _positionInterval,
+        (_) => _repeatPosition(),
+      );
+    }
   }
 
   void _repeatPosition() {
@@ -827,6 +922,8 @@ class AndroidAutoService {
   }
 
   void _forgetPhoneState() {
+    _phoneDpi = null;
+    _phoneSensors = null;
     _media = null;
     _mediaPositionAt = null;
     _artworkBytes = null;
@@ -889,11 +986,33 @@ class AndroidAutoService {
   }
 
   /// Whether the phone is told where the car is from the car's own GPS.
-  /// Takes effect the next time SmartifyOS starts, see [offersCarGps].
+  /// A phone connected now only starts using it once it connects again, see
+  /// [carGpsWaitsForReconnect].
   Future<void> setUseCarGps(bool on) async {
     if (on == state.useCarGps) return;
+    SmartifyOsLog.info(
+      _tag,
+      on
+          ? "Giving phones the car's GPS position"
+          : "No longer giving phones "
+                "the car's GPS position",
+    );
     _state.value = state.copyWith(useCarGps: on);
+    _controller?.setSensors(_sensors(useCarGps: on));
+    _repeatPositions(on);
+    // Straight away, since a position that holds still sends nothing new.
+    if (on) _onGpsFix(SmartifyOsGps.fix);
     await _store.saveUseCarGps(on);
+  }
+
+  /// How big Android Auto draws its text and buttons, as a percentage of
+  /// SmartifyOS's own. A phone connected now only shows it once it connects
+  /// again, see [sizeWaitsForReconnect].
+  Future<void> setSizePercent(int percent) async {
+    if (percent == state.sizePercent) return;
+    _state.value = state.copyWith(sizePercent: percent);
+    _applyDpi();
+    await _store.saveSizePercent(percent);
   }
 
   /// Forgets every phone that starts Android Auto over Bluetooth.

@@ -20,8 +20,9 @@ await SmartifyOs().init(
   Closing the window leaves Android Auto running.
 - **A notification while it runs**, with the Android Auto icon at the end of the status
   bar and a Stop button. Tapping it brings the window back.
-- **A page in Settings**, under Connectivity: start and stop, whether it starts on its
-  own, whether it may connect without a cable, and which phones start it over Bluetooth.
+- **A page in Settings**, right after Connectivity: start and stop, whether it starts on
+  its own, whether it may connect without a cable, which phones start it over Bluetooth,
+  and how big its text and buttons are.
 - The first time a phone connects, it asks whether Android Auto should start on its own
   from then on.
 - **Two cards on the home screen** while a phone is connected, each of which can be
@@ -57,6 +58,15 @@ paired again once.
 
 See `AndroidAutoWirelessNetwork` for a car that is always on a network the phone can join
 too, or that should only ever use the cable.
+
+## How big it is
+
+Android Auto's text and buttons follow SmartifyOS's own: at the default size they are
+as big as SmartifyOS's, on any screen. The screen's resolution only decides how sharp the
+picture is. If they look too big or too small in your car, change **Size of text and
+buttons** on the Android Auto page in Settings (or call
+`SmartifyOsAndroidAuto.setSizePercent`). A phone takes the size when it connects, so a
+phone connected at the time shows a new one the next time it connects.
 
 ## What the car needs
 
