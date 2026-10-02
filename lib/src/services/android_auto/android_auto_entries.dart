@@ -53,6 +53,9 @@ class AndroidAutoIds {
 List<HomeWidget> androidAutoHomeWidgets() => [
   HomeWidget(
     id: AndroidAutoIds.navigationWidget,
+    // What the driver reads when holding the area it shows up in.
+    title: t.android_auto.navigation_widget,
+    icon: const Icon(Icons.navigation),
     // Before the music: the next turn is the more urgent of the two.
     order: 10,
     visible: (home) {
@@ -69,6 +72,8 @@ List<HomeWidget> androidAutoHomeWidgets() => [
   ),
   HomeWidget(
     id: AndroidAutoIds.playerWidget,
+    title: t.android_auto.player_widget,
+    icon: const Icon(Icons.music_note),
     // Where the Bluetooth player sits, since this takes its place.
     order: 20,
     // The phone reports the same song over Bluetooth too, and one card per

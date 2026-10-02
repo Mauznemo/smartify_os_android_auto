@@ -119,6 +119,12 @@ class Translations$android_auto$en {
 
 	/// en: 'Not now'
 	String get autostart_question_no => 'Not now';
+
+	/// en: 'Android Auto music'
+	String get player_widget => 'Android Auto music';
+
+	/// en: 'Android Auto directions'
+	String get navigation_widget => 'Android Auto directions';
 }
 
 // Path: navigation
@@ -295,6 +301,8 @@ extension on Translations {
 			'android_auto.autostart_question_message' => 'Next time your phone is plugged in, or connects over Bluetooth after using Android Auto without a cable here, Android Auto can start by itself. You can change this in Settings.',
 			'android_auto.autostart_question_yes' => 'Start on its own',
 			'android_auto.autostart_question_no' => 'Not now',
+			'android_auto.player_widget' => 'Android Auto music',
+			'android_auto.navigation_widget' => 'Android Auto directions',
 			'navigation.rerouting' => 'Finding a new route',
 			'navigation.exit' => ({required Object number}) => 'Exit ${number}',
 			'navigation.arrive' => ({required Object time}) => 'Arrive ${time}',
