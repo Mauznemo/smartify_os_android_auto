@@ -73,7 +73,7 @@ abstract class AndroidAutoState with _$AndroidAutoState {
     @Default(false) bool wirelessAvailable,
 
     /// The name of the Wi-Fi hotspot the car brings up for the phone, or
-    /// `null` when it does not bring one up.
+    /// `null` when it does not bring one up or Android picks the name.
     String? hotspotName,
 
     /// The Bluetooth addresses of the phones that start Android Auto on their

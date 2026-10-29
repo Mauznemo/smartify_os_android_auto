@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:smartify_os_android_auto/src/i18n/strings.g.dart';
@@ -45,6 +46,9 @@ class AndroidAutoIds {
 
   /// The home screen card with the next turn, while the phone is guiding.
   static const String navigationWidget = 'android_auto.navigation';
+
+  /// The page in Settings, System, Developer options.
+  static const String developerPage = 'android_auto.developer';
 }
 
 /// Internal: the two cards on the home screen. Each checks the driver's own
@@ -179,15 +183,20 @@ SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
         ),
       SettingsEntry.toggle(
         title: t.settings.autostart,
-        subtitle: t.settings.autostart_hint,
+        subtitle: Platform.isAndroid
+            ? t.settings.autostart_hint_android
+            : t.settings.autostart_hint,
         initialValue: state.autostart,
         onChanged: (on) => unawaited(service.setAutostart(on)),
       ),
       if (state.wirelessAvailable)
         SettingsEntry.toggle(
           title: t.settings.wireless,
-          subtitle: state.hotspotName == null
+          subtitle: !service.usesHotspot
               ? t.settings.wireless_hint_existing
+              // Whether its own Wi-Fi stays on next to it depends on the device.
+              : Platform.isAndroid
+              ? t.settings.wireless_hint_android_hotspot
               : t.settings.wireless_hint_hotspot,
           initialValue: state.wireless,
           onChanged: (on) => unawaited(service.setWireless(on)),
@@ -234,13 +243,16 @@ SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
         onChanged: (on) => unawaited(service.setShowPlayer(on)),
       ),
       if (state.wirelessAvailable) ...[
-        SettingsEntry.info(
-          title: t.settings.wireless_phones,
-          value: phoneNames.isEmpty
-              ? t.settings.wireless_phones_none
-              : phoneNames.join(', '),
-          section: phones,
-        ),
+        // Android does not say which phones are on Bluetooth, so there it
+        // never starts on its own for one and keeps no list.
+        if (!Platform.isAndroid)
+          SettingsEntry.info(
+            title: t.settings.wireless_phones,
+            value: phoneNames.isEmpty
+                ? t.settings.wireless_phones_none
+                : phoneNames.join(', '),
+            section: phones,
+          ),
         if (phoneNames.isNotEmpty)
           SettingsEntry.action(
             title: t.settings.forget_phones,
@@ -258,4 +270,25 @@ SettingsPage androidAutoSettingsPage() => SettingsPage.builder(
       ],
     ];
   },
+);
+
+/// Internal: what only someone working on Android Auto needs, in Settings,
+/// System, Developer options.
+SettingsPage androidAutoDeveloperPage() => SettingsPage(
+  id: AndroidAutoIds.developerPage,
+  parent: SettingsPages.developer,
+  title: t.android_auto.title,
+  icon: const AndroidAutoIcon(),
+  entries: [
+    SettingsEntry.action(
+      title: t.settings.head_unit_server,
+      subtitle: t.settings.head_unit_server_hint,
+      icon: const Icon(Icons.phone_android),
+      onTap: () async {
+        final service = AndroidAutoService.instance;
+        await service.connectHeadUnitServer();
+        service.openWindow();
+      },
+    ),
+  ],
 );

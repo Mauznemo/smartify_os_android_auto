@@ -77,9 +77,28 @@ SmartifyOS open a phone without being root. They are all listed under `smartify_
 [`pubspec.yaml`](pubspec.yaml), and the `smartify-os` CLI installs them, so there is
 nothing to set up by hand.
 
-It runs the real head unit on Linux, and the plugin's pretend phone on macOS and Windows,
-so the whole flow can be tried while developing. It adds nothing on Android yet, since the
-plugin has no Android implementation.
+On Android (a car stereo, a tablet or a spare phone as the car's screen), the car's app
+needs `minSdk = 28` in `android/app/build.gradle.kts`, and this line in its
+`android/app/src/main/AndroidManifest.xml`, for the hotspot a phone joins without a cable
+on Android 12 and older:
+
+```xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+```
+
+The first time Android Auto starts there, it asks for the microphone, Bluetooth, nearby
+devices and location. A phone on the cable needs a USB port that works as a host (most car
+stereos and tablets, through an OTG adapter on a phone). Android does not let SmartifyOS
+see who is on Bluetooth, so a phone without a cable is found by trying the paired ones, and
+"Start on its own" also starts Android Auto with the car and gives such a phone a minute
+to connect. Android picks the hotspot's name and password itself.
+
+It runs the real head unit on Linux and Android, and the plugin's pretend phone on macOS
+and Windows, so the whole flow can be tried while developing.
+
+To try it with a single phone, open Android Auto's settings on that phone, tap Version ten
+times, choose "Start head unit server" in the menu, then in SmartifyOS use Settings,
+System, Developer options, Android Auto, "Connect to the head unit server".
 
 ## Working on it
 

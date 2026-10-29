@@ -20,6 +20,7 @@
     "problem_hotspot": "Could not start the Wi-Fi hotspot: $reason",
     "autostart_question_title": "Start Android Auto on its own?",
     "autostart_question_message": "Next time your phone is plugged in, or connects over Bluetooth after using Android Auto without a cable here, Android Auto can start by itself. You can change this in Settings.",
+    "autostart_question_message_android": "Next time your phone is plugged in, or the car starts, Android Auto can start by itself. You can change this in Settings.",
     "autostart_question_yes": "Start on its own",
     "autostart_question_no": "Not now",
     "player_widget": "Android Auto music",
@@ -39,9 +40,11 @@
     "stop": "Stop Android Auto",
     "autostart": "Start on its own",
     "autostart_hint": "When a phone is plugged in, or a phone that used Android Auto without a cable here connects over Bluetooth",
+    "autostart_hint_android": "When a phone is plugged in, and for a minute after the car starts for one without a cable",
     "wireless": "Connect without a cable",
     "wireless_hint_hotspot": "Starts a Wi-Fi hotspot for the phone. The car's own Wi-Fi is off while it is up",
     "wireless_hint_existing": "The phone joins the Wi-Fi network the car is on",
+    "wireless_hint_android_hotspot": "Starts a Wi-Fi hotspot for the phone",
     "hotspot_name": "Wi-Fi hotspot",
     "use_car_gps": "Use the car's GPS",
     "use_car_gps_hint": "Maps on the phone uses the car's position instead of its own. The phone's is usually more accurate",
@@ -69,6 +72,8 @@
     "size_much_larger": "Much larger",
     "size_slightly_smaller": "Slightly smaller",
     "size_slightly_larger": "Slightly larger",
-    "size_percent": "$percent%"
+    "size_percent": "$percent%",
+    "head_unit_server": "Connect to the head unit server",
+    "head_unit_server_hint": "For trying Android Auto with one phone: start the head unit server in Android Auto's developer settings on this phone first (on a computer, forward port 5277 to the phone with adb)"
   }
 }

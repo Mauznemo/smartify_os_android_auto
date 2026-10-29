@@ -114,6 +114,9 @@ class Translations$android_auto$en {
 	/// en: 'Next time your phone is plugged in, or connects over Bluetooth after using Android Auto without a cable here, Android Auto can start by itself. You can change this in Settings.'
 	String get autostart_question_message => 'Next time your phone is plugged in, or connects over Bluetooth after using Android Auto without a cable here, Android Auto can start by itself. You can change this in Settings.';
 
+	/// en: 'Next time your phone is plugged in, or the car starts, Android Auto can start by itself. You can change this in Settings.'
+	String get autostart_question_message_android => 'Next time your phone is plugged in, or the car starts, Android Auto can start by itself. You can change this in Settings.';
+
 	/// en: 'Start on its own'
 	String get autostart_question_yes => 'Start on its own';
 
@@ -177,6 +180,9 @@ class Translations$settings$en {
 	/// en: 'When a phone is plugged in, or a phone that used Android Auto without a cable here connects over Bluetooth'
 	String get autostart_hint => 'When a phone is plugged in, or a phone that used Android Auto without a cable here connects over Bluetooth';
 
+	/// en: 'When a phone is plugged in, and for a minute after the car starts for one without a cable'
+	String get autostart_hint_android => 'When a phone is plugged in, and for a minute after the car starts for one without a cable';
+
 	/// en: 'Connect without a cable'
 	String get wireless => 'Connect without a cable';
 
@@ -185,6 +191,9 @@ class Translations$settings$en {
 
 	/// en: 'The phone joins the Wi-Fi network the car is on'
 	String get wireless_hint_existing => 'The phone joins the Wi-Fi network the car is on';
+
+	/// en: 'Starts a Wi-Fi hotspot for the phone'
+	String get wireless_hint_android_hotspot => 'Starts a Wi-Fi hotspot for the phone';
 
 	/// en: 'Wi-Fi hotspot'
 	String get hotspot_name => 'Wi-Fi hotspot';
@@ -269,6 +278,12 @@ class Translations$settings$en {
 
 	/// en: '$percent%'
 	String size_percent({required Object percent}) => '${percent}%';
+
+	/// en: 'Connect to the head unit server'
+	String get head_unit_server => 'Connect to the head unit server';
+
+	/// en: 'For trying Android Auto with one phone: start the head unit server in Android Auto's developer settings on this phone first (on a computer, forward port 5277 to the phone with adb)'
+	String get head_unit_server_hint => 'For trying Android Auto with one phone: start the head unit server in Android Auto\'s developer settings on this phone first (on a computer, forward port 5277 to the phone with adb)';
 }
 
 /// The flat map containing all translations for locale <en>.
@@ -299,6 +314,7 @@ extension on Translations {
 			'android_auto.problem_hotspot' => ({required Object reason}) => 'Could not start the Wi-Fi hotspot: ${reason}',
 			'android_auto.autostart_question_title' => 'Start Android Auto on its own?',
 			'android_auto.autostart_question_message' => 'Next time your phone is plugged in, or connects over Bluetooth after using Android Auto without a cable here, Android Auto can start by itself. You can change this in Settings.',
+			'android_auto.autostart_question_message_android' => 'Next time your phone is plugged in, or the car starts, Android Auto can start by itself. You can change this in Settings.',
 			'android_auto.autostart_question_yes' => 'Start on its own',
 			'android_auto.autostart_question_no' => 'Not now',
 			'android_auto.player_widget' => 'Android Auto music',
@@ -314,9 +330,11 @@ extension on Translations {
 			'settings.stop' => 'Stop Android Auto',
 			'settings.autostart' => 'Start on its own',
 			'settings.autostart_hint' => 'When a phone is plugged in, or a phone that used Android Auto without a cable here connects over Bluetooth',
+			'settings.autostart_hint_android' => 'When a phone is plugged in, and for a minute after the car starts for one without a cable',
 			'settings.wireless' => 'Connect without a cable',
 			'settings.wireless_hint_hotspot' => 'Starts a Wi-Fi hotspot for the phone. The car\'s own Wi-Fi is off while it is up',
 			'settings.wireless_hint_existing' => 'The phone joins the Wi-Fi network the car is on',
+			'settings.wireless_hint_android_hotspot' => 'Starts a Wi-Fi hotspot for the phone',
 			'settings.hotspot_name' => 'Wi-Fi hotspot',
 			'settings.use_car_gps' => 'Use the car\'s GPS',
 			'settings.use_car_gps_hint' => 'Maps on the phone uses the car\'s position instead of its own. The phone\'s is usually more accurate',
@@ -345,6 +363,8 @@ extension on Translations {
 			'settings.size_slightly_smaller' => 'Slightly smaller',
 			'settings.size_slightly_larger' => 'Slightly larger',
 			'settings.size_percent' => ({required Object percent}) => '${percent}%',
+			'settings.head_unit_server' => 'Connect to the head unit server',
+			'settings.head_unit_server_hint' => 'For trying Android Auto with one phone: start the head unit server in Android Auto\'s developer settings on this phone first (on a computer, forward port 5277 to the phone with adb)',
 			_ => null,
 		};
 	}

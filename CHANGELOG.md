@@ -2,9 +2,16 @@
 
 ### Added
 
+- android as the head unit
+- connect to android auto's head unit server from the developer options
 - home screen cards for what the phone plays and the next turn
 - the Linux packages and udev rule it needs are listed in `pubspec.yaml`, for the
   `smartify-os` CLI to install
+
+### Removed
+
+- `extraPhoneVendorIds`: a phone on the cable is now told apart by what it offers over
+  USB rather than by who made it
 
 ### Fixed
 

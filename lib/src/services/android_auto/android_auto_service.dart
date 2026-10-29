@@ -7,10 +7,10 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:smartify_os_android_auto/src/android_auto_extension.dart';
 import 'package:smartify_os_android_auto/src/i18n/strings.g.dart';
+import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_permissions.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_store.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/models/android_auto_state.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/models/android_auto_wireless_network.dart';
-import 'package:smartify_os_android_auto/src/services/android_auto/usb_phone_finder.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/wifi_hotspot.dart';
 import 'package:smartify_os_android_auto/src/utils/android_auto_dpi.dart';
 import 'package:smartify_os_android_auto/src/utils/android_auto_status_text.dart';
@@ -47,6 +47,11 @@ import 'package:smartify_os_core/utils.dart';
 ///    connects over Bluetooth.
 ///
 /// The cable is listened on throughout, so plugging in later always works.
+///
+/// On Android SmartifyOS cannot see which phones are connected over
+/// Bluetooth, so a session there offers Wi-Fi to whichever paired phone
+/// answers (the head unit prods them by itself), and Android brings up a
+/// hotspot of its own for it.
 class AndroidAutoService {
   static const _tag = 'AndroidAuto';
 
@@ -76,8 +81,6 @@ class AndroidAutoService {
   /// phone being connected.
   static const _autostartCooldown = Duration(seconds: 15);
 
-  static const _usbPollInterval = Duration(seconds: 2);
-
   /// How often the phone is given the car's position. It expects a reading
   /// about this often, as a receiver would give it, and goes back to its own
   /// GPS within seconds when they stop.
@@ -89,9 +92,8 @@ class AndroidAutoService {
 
   final _state = ValueStream<AndroidAutoState>(const AndroidAutoState());
   final _store = const AndroidAutoStore();
-  final _hotspot = WifiHotspot();
+  WifiHotspot _hotspot = WifiHotspot();
 
-  UsbPhoneFinder _usb = const UsbPhoneFinder();
   AndroidAutoWirelessNetwork _network =
       const AndroidAutoWirelessNetwork.hotspot();
   String _passphrase = '';
@@ -129,16 +131,11 @@ class AndroidAutoService {
   String? _wirelessPhone;
   AndroidAutoConnection? _connection;
   String? _problem;
-  // Set while a cable-only session starts, see [startSession].
-  bool _quietStart = false;
-  String? _heldProblem;
   Timer? _idleTimer;
   Timer? _cableGraceTimer;
 
   // Starting on its own.
-  Timer? _usbPoll;
-  bool _polling = false;
-  bool _usbPhonePresent = false;
+  StreamSubscription<bool>? _usbWatch;
   Set<String> _bluetoothConnected = {};
   DateTime? _cooldownUntil;
 
@@ -176,6 +173,10 @@ class AndroidAutoService {
   /// Whether Android Auto works on this machine at all.
   bool get isSupported => _controller != null;
 
+  /// Whether a phone gets a Wi-Fi hotspot brought up for it, rather than
+  /// joining a network the car is on.
+  bool get usesHotspot => _network is AndroidAutoHotspotNetwork;
+
   /// Whether the phone connected now still has the size it connected with,
   /// rather than [AndroidAutoState.sizePercent]. A phone only takes its size
   /// when it connects, so it shows a new one the next time it does.
@@ -193,14 +194,24 @@ class AndroidAutoService {
         !sensors.contains(AndroidAutoSensor.location);
   }
 
+  /// Internal: puts a stand-in in place of this machine's own Wi-Fi, so a
+  /// test never runs `nmcli` on the computer it runs on (whose programs
+  /// answer on the real clock, which a test with a fake one never lets run).
+  /// Call before [start].
+  @visibleForTesting
+  void replaceHotspotForTesting(WifiHotspot hotspot) => _hotspot = hotspot;
+
   /// Makes the head unit and starts watching for phones. Returns `false`
   /// where Android Auto cannot run, which leaves the extension adding
   /// nothing.
   Future<bool> start(AndroidAutoExtension config) async {
-    // The real head unit is Linux, and android_auto runs a simulated phone on
-    // macOS and Windows so the whole thing can be tried while developing.
-    // There is no Android implementation yet.
-    if (!Platform.isLinux && !Platform.isMacOS && !Platform.isWindows) {
+    // The real head unit is Linux or Android, and android_auto runs a
+    // simulated phone on macOS and Windows so the whole thing can be tried
+    // while developing.
+    if (!Platform.isLinux &&
+        !Platform.isAndroid &&
+        !Platform.isMacOS &&
+        !Platform.isWindows) {
       SmartifyOsLog.info(
         _tag,
         'Android Auto is not available on ${Platform.operatingSystem}',
@@ -210,7 +221,6 @@ class AndroidAutoService {
 
     final about = SmartifyOsSettings.about;
     _network = config.wirelessNetwork;
-    _usb = UsbPhoneFinder(extraVendorIds: config.extraPhoneVendorIds);
     final saved = await _store.load();
     _passphrase = saved.hotspotPassphrase;
     _askedAboutAutostart = saved.askedAboutAutostart;
@@ -252,6 +262,8 @@ class AndroidAutoService {
       wireless: saved.wireless,
       wirelessAvailable: wirelessAvailable,
       hotspotName: switch (_network) {
+        // Android picks the name of the hotspot it brings up itself.
+        AndroidAutoHotspotNetwork() when Platform.isAndroid => null,
         AndroidAutoHotspotNetwork(:final name) => name ?? about.deviceName,
         _ => null,
       },
@@ -290,7 +302,7 @@ class AndroidAutoService {
       unawaited(_hotspot.removeLeftover());
     }
 
-    if (state.autostart) unawaited(_watchForPhones(checkNow: true));
+    if (state.autostart) _watchForPhones(checkNow: true);
     return true;
   }
 
@@ -317,21 +329,16 @@ class AndroidAutoService {
     SmartifyOsLog.info(_tag, automatic ? 'Starting on its own' : 'Starting');
     _publish();
 
-    final cable = await _usb.isPhonePluggedIn();
+    if (Platform.isAndroid) await AndroidAutoPermissions.request();
     if (session != _session) return;
+    final cable = controller.phoneOnUsb;
     final phone = cable ? null : _wirelessCandidate();
-    if (phone != null) {
+    if (phone != null || (!cable && _offersWirelessToAnyPhone)) {
       // Before the start, which then offers Wi-Fi on the network made here.
       await _prepareWireless(phone);
       if (session != _session) return;
     }
 
-    // Starting offers Wi-Fi as well, since the head unit was made able to.
-    // Without a network made for this session there is nothing to offer, the
-    // head unit reports that as an error, and it is taken back below. That
-    // error is not something the driver should read about, so errors are
-    // held while it starts, and dropped once the head unit says it is
-    // looking for a phone, which it only does when the cable side started.
     // The phone is asked for its frame, shape and all, the moment it connects,
     // and keeps it for the whole connection. A start with the window closed
     // (starting on its own, or from a button of the car's) has no view to
@@ -342,24 +349,13 @@ class AndroidAutoService {
     if (!AndroidAutoWindow.isOpen && viewSize != null) {
       controller.setViewSize(viewSize);
     }
-    _quietStart = !_wirelessOffered;
-    await controller.start();
+    // Only the cable unless a network was made for a phone above. Wi-Fi can
+    // still be offered later in the session, see [_tryWireless], and phones
+    // asking over Bluetooth meanwhile are refused.
+    await controller.start(
+      transports: _wirelessOffered ? null : const {AndroidAutoTransport.usb},
+    );
     if (session != _session) return;
-
-    if (!_wirelessOffered) {
-      await controller.stopWireless();
-      // The head unit's events arrive a moment after the calls that caused
-      // them.
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-      if (session != _session) return;
-      _quietStart = false;
-      final held = _heldProblem;
-      _heldProblem = null;
-      if (held != null) {
-        SmartifyOsLog.warning(_tag, held);
-        _problem = held;
-      }
-    }
 
     if (cable) {
       SmartifyOsLog.info(_tag, 'Found a phone on the cable');
@@ -382,8 +378,6 @@ class AndroidAutoService {
     _session++;
     _running = false;
     _startingHotspot = false;
-    _quietStart = false;
-    _heldProblem = null;
     _idleTimer?.cancel();
     _cableGraceTimer?.cancel();
     _cooldownUntil = DateTime.now().add(_autostartCooldown);
@@ -399,6 +393,19 @@ class AndroidAutoService {
     _connection = null;
     _forgetPhoneState();
     _publish();
+  }
+
+  /// Dials Android Auto's head unit server, the developer mode of Android
+  /// Auto on a phone that lets it project into a head unit on the same phone
+  /// (or, through `adb forward tcp:5277 tcp:5277`, on this computer). Starts
+  /// a session first when none runs. Only for the developer options.
+  Future<void> connectHeadUnitServer() async {
+    final controller = _controller;
+    if (controller == null) return;
+    if (!_running) await startSession();
+    if (!_running) return;
+    SmartifyOsLog.info(_tag, 'Dialling the head unit server');
+    await controller.connectHeadUnitServer();
   }
 
   /// Opens the Android Auto window, unless it is already open.
@@ -506,14 +513,25 @@ class AndroidAutoService {
     return null;
   }
 
-  /// Gets a Wi-Fi network ready for [phone] and tells the head unit about it.
-  /// Does not start offering it: the caller does that, or `start` does.
-  Future<bool> _prepareWireless(BluetoothDevice phone) async {
+  /// Whether Wi-Fi is offered without a phone in mind, which is how it works
+  /// on Android: SmartifyOS cannot see there which phones are connected over
+  /// Bluetooth, and the head unit prods the paired ones until one answers.
+  bool get _offersWirelessToAnyPhone =>
+      Platform.isAndroid && state.usesWireless;
+
+  /// Gets a Wi-Fi network ready for [phone] (any paired phone when `null`)
+  /// and tells the head unit about it. Does not start offering it: the caller
+  /// does that, or `start` does.
+  Future<bool> _prepareWireless(BluetoothDevice? phone) async {
     final controller = _controller!;
     final session = _session;
 
     final AndroidAutoWirelessConfig config;
     switch (_network) {
+      case AndroidAutoHotspotNetwork() when Platform.isAndroid:
+        // Named nothing, the head unit brings up a hotspot of Android's own,
+        // with a name and password Android picks, as soon as Wi-Fi is offered.
+        config = AndroidAutoWirelessConfig(phoneAddress: phone?.address ?? '');
       case AndroidAutoHotspotNetwork():
         _startingHotspot = true;
         _publish();
@@ -542,7 +560,7 @@ class AndroidAutoService {
           passphrase: _passphrase,
           ssid: name,
           interfaceName: result.interfaceName!,
-          phoneAddress: phone.address,
+          phoneAddress: phone?.address ?? '',
         );
       case AndroidAutoExistingNetwork(
         :final passphrase,
@@ -553,7 +571,7 @@ class AndroidAutoService {
           passphrase: passphrase,
           ssid: name,
           interfaceName: interfaceName,
-          phoneAddress: phone.address,
+          phoneAddress: phone?.address ?? '',
         );
       case AndroidAutoNoNetwork():
         return false;
@@ -561,8 +579,11 @@ class AndroidAutoService {
 
     controller.setWirelessConfig(config);
     _wirelessOffered = true;
-    _wirelessPhone = phone.address;
-    SmartifyOsLog.info(_tag, 'Offering Wi-Fi to ${phone.name}');
+    _wirelessPhone = phone?.address;
+    SmartifyOsLog.info(
+      _tag,
+      'Offering Wi-Fi to ${phone?.name ?? 'whichever paired phone answers'}',
+    );
     _publish();
     return true;
   }
@@ -579,7 +600,7 @@ class AndroidAutoService {
       return;
     }
     final phone = _wirelessCandidate();
-    if (phone == null) return;
+    if (phone == null && !_offersWirelessToAnyPhone) return;
 
     final session = _session;
     if (!await _prepareWireless(phone)) return;
@@ -627,24 +648,18 @@ class AndroidAutoService {
           // as long as it stays.
           _phoneDpi = _controller?.dpi;
           _phoneSensors = _controller?.sensors;
-          unawaited(_onConnected());
+          _onConnected();
           // In case the phone spoke up a moment before it counted as
           // connected.
           _publishPhoneState();
         }
       case AndroidAutoConnectionState.error:
         final message = event.message;
-        if (message != null && _quietStart) {
-          _heldProblem = message;
-        } else if (message != null) {
+        if (message != null) {
           _problem = message;
           SmartifyOsLog.warning(_tag, message);
         }
         if (previous == AndroidAutoConnectionState.connected) _onPhoneLost();
-      case AndroidAutoConnectionState.searching when _quietStart:
-        // The cable side is up, so whatever went wrong before this was the
-        // Wi-Fi being offered with no network, see [startSession].
-        _heldProblem = null;
       case AndroidAutoConnectionState.idle ||
           AndroidAutoConnectionState.searching ||
           AndroidAutoConnectionState.handshaking:
@@ -667,16 +682,10 @@ class AndroidAutoService {
     unawaited(_tryWireless());
   }
 
-  Future<void> _onConnected() async {
-    final session = _session;
+  void _onConnected() {
     // Wi-Fi only when it was offered and there is no phone on the cable,
     // since a cable plugged in takes over from Wi-Fi.
-    final cable = !_wirelessOffered || await _usb.isPhonePluggedIn();
-    if (session != _session ||
-        _headUnit != AndroidAutoConnectionState.connected) {
-      return;
-    }
-
+    final cable = !_wirelessOffered || _controller!.phoneOnUsb;
     _hadPhone = true;
     _connection = cable
         ? AndroidAutoConnection.cable
@@ -725,7 +734,9 @@ class AndroidAutoService {
     final yes = await ThemedDialog.confirm(
       context,
       title: t.android_auto.autostart_question_title,
-      message: t.android_auto.autostart_question_message,
+      message: Platform.isAndroid
+          ? t.android_auto.autostart_question_message_android
+          : t.android_auto.autostart_question_message,
       confirmLabel: t.android_auto.autostart_question_yes,
       cancelLabel: t.android_auto.autostart_question_no,
     );
@@ -737,47 +748,38 @@ class AndroidAutoService {
   /// Starts watching the cable. With [checkNow], a phone already there when
   /// this is called starts a session too, which is what boot wants and a
   /// driver flipping the switch in Settings does not.
-  Future<void> _watchForPhones({bool checkNow = false}) async {
-    _usbPoll?.cancel();
-    _usbPhonePresent = await _usb.isPhonePluggedIn();
-    if (!state.autostart) return;
+  void _watchForPhones({bool checkNow = false}) {
+    final controller = _controller;
+    if (controller == null || !state.autostart) return;
 
     if (checkNow && !_running) {
-      if (_usbPhonePresent) {
+      if (controller.phoneOnUsb) {
         SmartifyOsLog.info(_tag, 'A phone is plugged in at boot');
         unawaited(startSession(automatic: true));
       } else if (_knownPhoneConnected(_bluetoothConnected)) {
         SmartifyOsLog.info(_tag, 'A known phone is on Bluetooth at boot');
         unawaited(startSession(automatic: true));
+      } else if (Platform.isAndroid && state.usesWireless) {
+        // Android does not let SmartifyOS see who is on Bluetooth, so for a
+        // phone without a cable it starts with the car, as a car does, and
+        // gives one [idleTimeout] to turn up.
+        SmartifyOsLog.info(_tag, 'Starting with the car');
+        unawaited(startSession(automatic: true));
       }
     }
 
-    // Reading a handful of small files every couple of seconds costs next to
-    // nothing, and unlike a udev monitor it needs nothing installed.
-    if (Platform.isLinux) {
-      _usbPoll = Timer.periodic(_usbPollInterval, (_) => _pollUsb());
-    }
+    // The head unit looks once a second, and only while this listens.
+    _usbWatch ??= controller.phoneOnUsbChanges.listen((present) {
+      if (present && _mayStartOnItsOwn) {
+        SmartifyOsLog.info(_tag, 'A phone was plugged in');
+        unawaited(startSession(automatic: true));
+      }
+    });
   }
 
   void _stopWatching() {
-    _usbPoll?.cancel();
-    _usbPoll = null;
-  }
-
-  Future<void> _pollUsb() async {
-    if (_polling) return;
-    _polling = true;
-    try {
-      final present = await _usb.isPhonePluggedIn();
-      final arrived = present && !_usbPhonePresent;
-      _usbPhonePresent = present;
-      if (arrived && _mayStartOnItsOwn) {
-        SmartifyOsLog.info(_tag, 'A phone was plugged in');
-        await startSession(automatic: true);
-      }
-    } finally {
-      _polling = false;
-    }
+    unawaited(_usbWatch?.cancel());
+    _usbWatch = null;
   }
 
   void _onBluetoothDevices(List<BluetoothDevice> devices) {
@@ -943,7 +945,7 @@ class AndroidAutoService {
       // Switched on by hand, so there is nothing left to ask.
       _askedAboutAutostart = true;
       unawaited(_store.saveAskedAboutAutostart());
-      await _watchForPhones();
+      _watchForPhones();
     } else {
       _stopWatching();
     }

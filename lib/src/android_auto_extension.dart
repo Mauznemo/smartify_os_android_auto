@@ -38,10 +38,22 @@ import 'package:smartify_os_core/settings.dart';
 /// do Android Auto without a cable while it pairs, and this is what tells it
 /// the car can. One paired before has to be forgotten and paired again once.
 ///
-/// Runs a real head unit on Linux and a pretend phone on macOS and Windows,
-/// so the whole thing can be tried while developing. It adds nothing on
-/// Android yet. The car needs what the android_auto package lists for Linux,
-/// which the SmartifyOS install script sets up.
+/// Runs a real head unit on Linux and Android, and a pretend phone on macOS
+/// and Windows, so the whole thing can be tried while developing. On Linux
+/// the car needs what the android_auto package lists, which the SmartifyOS
+/// install script sets up.
+///
+/// On Android the car's app needs `minSdk = 28` in
+/// `android/app/build.gradle.kts`, and this line in its `AndroidManifest.xml`
+/// for the hotspot a phone joins without a cable on Android 12 and older:
+///
+/// ```xml
+/// <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+/// ```
+///
+/// Android does not let SmartifyOS see who is on Bluetooth, so there a phone
+/// without a cable is found by the head unit trying the paired ones, and
+/// "start on its own" also starts with the car and gives one a minute.
 ///
 /// android_auto is GPL-3.0, so a car's app that uses this is too.
 class AndroidAutoExtension extends SmartifyOsExtension {
@@ -61,20 +73,11 @@ class AndroidAutoExtension extends SmartifyOsExtension {
   /// A hotspot the car brings up for it, unless you say otherwise.
   final AndroidAutoWirelessNetwork wirelessNetwork;
 
-  /// USB vendor ids to count as phones when deciding whether a phone is
-  /// plugged in, for a phone whose maker SmartifyOS does not know yet. Find
-  /// yours with `lsusb`: it is the four digits before the colon.
-  ///
-  /// This only decides whether to bring the Wi-Fi hotspot up. A phone the car
-  /// does not recognise still projects over the cable.
-  final Set<int> extraPhoneVendorIds;
-
   const AndroidAutoExtension({
     this.headUnitName,
     this.carModel,
     this.carYear,
     this.wirelessNetwork = const AndroidAutoWirelessNetwork.hotspot(),
-    this.extraPhoneVendorIds = const {},
   });
 
   @override
@@ -89,7 +92,10 @@ class AndroidAutoExtension extends SmartifyOsExtension {
     if (!await AndroidAutoService.instance.start(this)) return;
 
     SmartifyOsAppList.addEntry(androidAutoAppListEntry());
-    SmartifyOsSettings.addPage(androidAutoSettingsPage());
+    SmartifyOsSettings.addPages([
+      androidAutoSettingsPage(),
+      androidAutoDeveloperPage(),
+    ]);
     SmartifyOsHomeWidgets.addWidgets(androidAutoHomeWidgets());
   }
 }

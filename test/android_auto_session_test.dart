@@ -9,6 +9,8 @@ import 'package:smartify_os_android_auto/android_auto.dart';
 import 'package:smartify_os_android_auto/src/i18n/strings.g.dart';
 import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_service.dart';
 
+import 'support/no_hotspot.dart';
+
 /// What a real phone does, step by step and on a clock the test controls: it
 /// is "connected" a good while before it sends a picture, and when the cable
 /// comes out the head unit only says it is looking again. The window draws
@@ -22,6 +24,7 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
     AndroidAutoPlatform.instance = phone;
+    service.replaceHotspotForTesting(NoHotspot());
   });
 
   test('every step until the picture, and giving up on a lost phone', () {
@@ -38,6 +41,9 @@ void main() {
       async.elapse(const Duration(milliseconds: 300));
       expect(service.state.phase, AndroidAutoPhase.waitingForPhone);
       expect(phone.viewSizeAtStart, const Size(1016, 506));
+      // No phone on Bluetooth to offer Wi-Fi to, so only the cable, and no
+      // hotspot comes up just to be turned down.
+      expect(phone.transportsAtStart, {AndroidAutoTransport.usb});
 
       phone.say(AndroidAutoConnectionState.handshaking);
       async.flushMicrotasks();
@@ -163,6 +169,7 @@ class _ScriptedPhone extends AndroidAutoPlatform {
 
   /// The view size the head unit knew when it was started.
   Size? viewSizeAtStart;
+  Set<AndroidAutoTransport>? transportsAtStart;
 
   void say(AndroidAutoConnectionState state, [String? message]) {
     if (state != AndroidAutoConnectionState.connected) _video = false;
@@ -199,8 +206,12 @@ class _ScriptedPhone extends AndroidAutoPlatform {
       _viewSize = Size(width, height);
 
   @override
-  Future<void> start(AndroidAutoConfig config) async {
+  Future<void> start(
+    AndroidAutoConfig config, {
+    Set<AndroidAutoTransport>? transports,
+  }) async {
     viewSizeAtStart = _viewSize;
+    transportsAtStart = transports;
     say(AndroidAutoConnectionState.searching);
   }
 

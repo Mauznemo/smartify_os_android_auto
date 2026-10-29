@@ -26,7 +26,7 @@ mixin _$AndroidAutoState {
  bool get wireless;/// Whether this car can do Android Auto without a cable at all, that is
 /// whether it was set up with a Wi-Fi network for the phone.
  bool get wirelessAvailable;/// The name of the Wi-Fi hotspot the car brings up for the phone, or
-/// `null` when it does not bring one up.
+/// `null` when it does not bring one up or Android picks the name.
  String? get hotspotName;/// The Bluetooth addresses of the phones that start Android Auto on their
 /// own when they connect: every phone that has used it here without a
 /// cable.
@@ -264,7 +264,7 @@ class _AndroidAutoState extends AndroidAutoState {
 /// whether it was set up with a Wi-Fi network for the phone.
 @override@JsonKey() final  bool wirelessAvailable;
 /// The name of the Wi-Fi hotspot the car brings up for the phone, or
-/// `null` when it does not bring one up.
+/// `null` when it does not bring one up or Android picks the name.
 @override final  String? hotspotName;
 /// The Bluetooth addresses of the phones that start Android Auto on their
 /// own when they connect: every phone that has used it here without a

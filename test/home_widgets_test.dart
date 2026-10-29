@@ -10,6 +10,8 @@ import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_
 import 'package:smartify_os_android_auto/src/widgets/home_widgets/android_auto_navigation_home_widget.dart';
 import 'package:smartify_os_android_auto/src/widgets/home_widgets/android_auto_player_home_widget.dart';
 
+import 'support/no_hotspot.dart';
+
 /// The two home screen cards, drawn from what a connected phone says. The
 /// turn card has to say exactly what the phone said, in its units and its
 /// time, and the player's buttons have to reach the phone as keys.
@@ -20,6 +22,7 @@ void main() {
   setUpAll(() {
     SharedPreferences.setMockInitialValues({});
     AndroidAutoPlatform.instance = phone;
+    service.replaceHotspotForTesting(NoHotspot());
   });
 
   Future<void> connect(WidgetTester tester) async {
@@ -167,7 +170,10 @@ class _Phone extends AndroidAutoPlatform {
   void pressKey(AndroidAutoKey key) => keys.add(key);
 
   @override
-  Future<void> start(AndroidAutoConfig config) async =>
+  Future<void> start(
+    AndroidAutoConfig config, {
+    Set<AndroidAutoTransport>? transports,
+  }) async =>
       _events.add(const AndroidAutoEvent(AndroidAutoConnectionState.searching));
 
   @override

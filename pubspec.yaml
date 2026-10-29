@@ -22,7 +22,11 @@ dependencies:
   # actually runs, see EXTENSIONS.md in the SmartifyOS repository.
   smartify_os_core: ">=0.0.1"
 
-  android_auto: ^0.1.7
+  android_auto: ^0.2.1
+  # What Android Auto needs the driver to allow on Android: the microphone,
+  # Bluetooth and the hotspot. Not 13, whose Android side needs compileSdk 37,
+  # which the Android Gradle plugin a car's app is made with cannot find.
+  permission_handler: ^12.0.1
 
   # Packages SmartifyOS uses itself: the car's SmartifyOS picks the version.
   flutter_riverpod: any
