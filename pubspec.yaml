@@ -86,3 +86,12 @@ smartify_os:
         - system/udev/70-android-auto.rules
       groups:
         - plugdev
+  # What the car's app needs on Android, written into its android/ folder by
+  # the CLI.
+  android:
+    # Android 9: the android_auto plugin needs it, and the build fails in the
+    # manifest merge with Flutter's default.
+    minSdk: 28
+    permissions:
+      # The hotspot a phone joins without a cable, on Android 12 and older.
+      - android.permission.ACCESS_FINE_LOCATION
