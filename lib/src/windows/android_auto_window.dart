@@ -9,6 +9,7 @@ import 'package:smartify_os_android_auto/src/services/android_auto/android_auto_
 import 'package:smartify_os_android_auto/src/services/android_auto/models/android_auto_state.dart';
 import 'package:smartify_os_android_auto/src/utils/android_auto_status_text.dart';
 import 'package:smartify_os_android_auto/src/widgets/android_auto_icon.dart';
+import 'package:smartify_os_core/focus.dart';
 import 'package:smartify_os_core/status_bar.dart';
 import 'package:smartify_os_core/theme.dart';
 import 'package:smartify_os_core/widgets.dart';
@@ -69,6 +70,30 @@ class _AndroidAutoWindowState extends ConsumerState<AndroidAutoWindow> {
     _service.rememberView(size * ratio, ratio);
   }
 
+  /// Passes the car's knob and buttons on to the phone, which moves its own
+  /// highlight around Android Auto with them.
+  ///
+  /// Only while the picture is live: before it (and after the phone is lost)
+  /// the window shows a placeholder, whose start button the knob has to be
+  /// able to reach like any other.
+  bool _onFocusInput(SmartifyOsFocusInput input) {
+    final controller = _service.controller;
+    if (controller == null || !controller.hasVideo) return false;
+    switch (input) {
+      case SmartifyOsFocusInput.next:
+        controller.sendRotary(1);
+      case SmartifyOsFocusInput.previous:
+        controller.sendRotary(-1);
+      case SmartifyOsFocusInput.up:
+        controller.pressKey(AndroidAutoKey.up);
+      case SmartifyOsFocusInput.down:
+        controller.pressKey(AndroidAutoKey.down);
+      case SmartifyOsFocusInput.press:
+        controller.pressKey(AndroidAutoKey.enter);
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(androidAutoStateProvider).value ?? _service.state;
@@ -76,6 +101,7 @@ class _AndroidAutoWindowState extends ConsumerState<AndroidAutoWindow> {
 
     return SmartifyOsWindow.withoutTitleBar(
       hiddenStatusIcons: const {StatusIcons.clock},
+      onFocusInput: _onFocusInput,
       child: controller == null
           ? const SizedBox.shrink()
           // The view shows the placeholder whenever the phone's picture is not
